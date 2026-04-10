@@ -1,5 +1,25 @@
 <template>
-  <div class="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1.1fr_minmax(0,480px)]">
+  <div class="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-5 lg:grid-cols-[1.1fr_minmax(0,480px)] lg:gap-8">
+    <section class="glass-panel p-5 sm:p-6 lg:hidden">
+      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-susBlue">Sistema SUS</p>
+      <h1 class="mt-3 font-display text-3xl font-semibold leading-tight text-ink">
+        Marque sua consulta de forma simples pelo celular.
+      </h1>
+      <p class="mt-3 text-base leading-7 text-slate-700">
+        Entre com seu email e senha. Se ainda nao tiver conta, toque em criar conta.
+      </p>
+      <div class="mt-4 grid gap-3">
+        <div class="rounded-3xl bg-susBlue-soft/70 p-4">
+          <p class="text-sm font-semibold text-susBlue-dark">1. Entre ou crie sua conta</p>
+          <p class="mt-1 text-sm leading-6 text-slate-700">O cadastro e gratuito e rapido.</p>
+        </div>
+        <div class="rounded-3xl bg-susGreen-soft/70 p-4">
+          <p class="text-sm font-semibold text-susGreen-dark">2. Busque a unidade pelo CEP</p>
+          <p class="mt-1 text-sm leading-6 text-slate-700">Depois escolha especialidade e horario.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="relative hidden overflow-hidden rounded-[36px] bg-slate-900 p-10 text-white shadow-soft lg:block">
       <div class="absolute inset-0 bg-gradient-to-br from-susBlue/80 via-slate-900 to-susGreen/70" />
       <div class="absolute -right-10 top-8 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
@@ -11,55 +31,57 @@
             Sistema SUS
           </p>
           <h1 class="mt-5 font-display text-5xl font-semibold leading-tight">
-            Agendamento inteligente para unidades, gestores e pacientes.
+            Acesso simples para marcar consulta na rede publica.
           </h1>
           <p class="mt-6 max-w-xl text-base leading-7 text-slate-200">
-            Centralize o acesso ao sistema, acompanhe a oferta de horarios e reduza o
-            atrito no fluxo de marcacao com um painel simples e moderno.
+            Uma porta de entrada clara para pacientes e equipes, com foco em uso rapido,
+            leitura facil e funcionamento no celular.
           </p>
         </div>
 
         <div class="grid gap-4 md:grid-cols-3">
           <div class="rounded-3xl border border-white/10 bg-white/10 p-4">
-            <p class="text-xs uppercase tracking-[0.22em] text-slate-200">Auth</p>
-            <h2 class="mt-3 text-lg font-semibold">Supabase pronto</h2>
+            <p class="text-xs uppercase tracking-[0.22em] text-slate-200">Acesso</p>
+            <h2 class="mt-3 text-lg font-semibold">Entrar ou criar conta</h2>
             <p class="mt-2 text-sm text-slate-200">
-              Login por email/senha com redirecionamento por papel.
+              Login por email e senha com redirecionamento automatico.
             </p>
           </div>
           <div class="rounded-3xl border border-white/10 bg-white/10 p-4">
-            <p class="text-xs uppercase tracking-[0.22em] text-slate-200">Gestao</p>
-            <h2 class="mt-3 text-lg font-semibold">Fluxo operacional</h2>
+            <p class="text-xs uppercase tracking-[0.22em] text-slate-200">Atendimento</p>
+            <h2 class="mt-3 text-lg font-semibold">Horarios organizados</h2>
             <p class="mt-2 text-sm text-slate-200">
-              Unidades, especialidades, horarios e agendamentos no mesmo painel.
+              Unidades, especialidades e horarios reunidos no mesmo sistema.
             </p>
           </div>
           <div class="rounded-3xl border border-white/10 bg-white/10 p-4">
             <p class="text-xs uppercase tracking-[0.22em] text-slate-200">Paciente</p>
-            <h2 class="mt-3 text-lg font-semibold">Mapa e proximidade</h2>
+            <h2 class="mt-3 text-lg font-semibold">Busca por CEP</h2>
             <p class="mt-2 text-sm text-slate-200">
-              Busca por CEP e reserva de horarios disponiveis via Leaflet.
+              Veja unidades proximas e escolha o horario disponivel.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <BaseCard class="mx-auto w-full max-w-xl">
+    <BaseCard class="mx-auto w-full max-w-xl rounded-[28px]">
       <div class="mb-8">
-        <div class="mb-4 inline-flex rounded-full bg-susBlue-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-susBlue-dark">
-          {{ isRegisterMode ? 'Criacao de conta' : 'Acesso seguro' }}
+        <div class="mb-4 inline-flex rounded-full bg-susBlue-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-susBlue-dark">
+          {{ isRegisterMode ? 'Criar conta' : 'Entrar' }}
         </div>
-        <h2 class="font-display text-3xl font-semibold text-ink">
-          {{ isRegisterMode ? 'Crie sua conta de paciente' : 'Entre no painel do sistema' }}
+        <h2 class="font-display text-3xl font-semibold leading-tight text-ink sm:text-4xl">
+          {{ isRegisterMode ? 'Crie sua conta de paciente' : 'Entrar para marcar consulta' }}
         </h2>
-        <p class="mt-3 text-sm leading-6 text-slate-600">
-          {{ isRegisterMode ? 'Seu cadastro nasce como paciente. Perfis de admin devem ser promovidos no Supabase.' : 'Use seu email e senha para acessar o painel correto automaticamente.' }}
+        <p class="mt-3 text-base leading-7 text-slate-700">
+          {{ isRegisterMode ? 'Depois do cadastro, voce podera buscar unidades, especialidades e horarios.' : 'Use os dados da sua conta para acompanhar e marcar atendimentos.' }}
         </p>
       </div>
 
       <div
         v-if="feedback.message"
+        role="alert"
+        aria-live="polite"
         class="mb-6 rounded-2xl border px-4 py-3 text-sm"
         :class="
           feedback.type === 'error'
@@ -80,6 +102,7 @@
             class="input-field"
             placeholder="Ex.: Maria da Silva"
             autocomplete="name"
+            enterkeyhint="next"
           />
         </div>
 
@@ -92,6 +115,9 @@
             class="input-field"
             placeholder="voce@exemplo.com"
             autocomplete="email"
+            autocapitalize="off"
+            inputmode="email"
+            enterkeyhint="next"
             required
           />
         </div>
@@ -105,31 +131,32 @@
             class="input-field"
             placeholder="Digite sua senha"
             autocomplete="current-password"
+            enterkeyhint="done"
             required
           />
           <p class="helper-text mt-2">
-            Use pelo menos 6 caracteres para manter o acesso seguro.
+            Use pelo menos 6 caracteres.
           </p>
         </div>
 
         <BaseButton type="submit" block size="lg" :loading="loading" :disabled="!canSubmit">
-          {{ isRegisterMode ? 'Criar conta' : 'Entrar' }}
+          {{ isRegisterMode ? 'Criar minha conta' : 'Entrar agora' }}
         </BaseButton>
       </form>
 
-      <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-slate-50 px-4 py-4">
+      <div class="mt-6 flex flex-col gap-4 rounded-3xl bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p class="text-sm font-semibold text-slate-800">
-            {{ isRegisterMode ? 'Ja possui uma conta?' : 'Ainda nao tem acesso?' }}
+            {{ isRegisterMode ? 'Ja possui conta?' : 'Ainda nao tem conta?' }}
           </p>
-          <p class="text-sm text-slate-500">
-            {{ isRegisterMode ? 'Volte para o login normal.' : 'Crie sua conta de paciente em segundos.' }}
+          <p class="text-sm leading-6 text-slate-600">
+            {{ isRegisterMode ? 'Volte para a tela de entrada.' : 'Crie sua conta de paciente em poucos passos.' }}
           </p>
         </div>
 
         <button
           type="button"
-          class="text-sm font-semibold text-susBlue transition hover:text-susBlue-dark"
+          class="min-h-12 rounded-2xl border border-susBlue/20 bg-white px-4 py-3 text-sm font-semibold text-susBlue transition hover:text-susBlue-dark"
           @click="toggleMode"
         >
           {{ isRegisterMode ? 'Voltar para entrar' : 'Criar conta' }}

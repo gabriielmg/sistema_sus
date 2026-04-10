@@ -78,9 +78,9 @@ const variantMap = {
 }
 
 const sizeMap = {
-  sm: 'px-3 py-2 text-sm',
-  md: 'px-4 py-3 text-sm',
-  lg: 'px-5 py-3.5 text-sm',
+  sm: 'min-h-11 px-4 py-2.5 text-sm',
+  md: 'min-h-12 px-4 py-3 text-sm',
+  lg: 'min-h-14 px-5 py-4 text-base',
 }
 
 const variantClass = computed(() => variantMap[props.variant] ?? variantMap.primary)

@@ -4,14 +4,14 @@
       <div class="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.28em] text-susGreen">
-            Busca territorial
+            Atendimento perto de voce
           </p>
-          <h2 class="mt-3 font-display text-3xl font-semibold text-ink">
-            Encontre a unidade ideal pelo CEP e reserve seu horario
+          <h2 class="mt-3 font-display text-3xl font-semibold leading-tight text-ink">
+            Digite seu CEP, veja as unidades proximas e escolha um horario
           </h2>
-          <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            O mapa centraliza na regiao buscada, mostra as unidades cadastradas no
-            Supabase e libera o agendamento dos horarios disponiveis.
+          <p class="mt-3 max-w-3xl text-base leading-7 text-slate-700">
+            O sistema mostra no mapa as unidades cadastradas, ordena pela distancia e ajuda
+            voce a marcar o atendimento pelo celular.
           </p>
         </div>
 
@@ -25,6 +25,8 @@
               maxlength="9"
               class="input-field"
               placeholder="00000-000"
+              inputmode="numeric"
+              enterkeyhint="search"
               @input="handleSearchCepInput($event.target.value)"
             />
             <BaseButton type="submit" size="lg" :loading="loading.search" class="sm:min-w-[132px]">
@@ -37,7 +39,13 @@
         </form>
       </div>
 
-      <div class="mt-6 grid gap-4 md:grid-cols-3">
+      <div class="mt-6 grid gap-3 md:grid-cols-3">
+        <div class="rounded-3xl border border-susBlue/10 bg-susBlue-soft/50 p-5">
+          <p class="text-sm font-semibold text-susBlue-dark">Como funciona</p>
+          <p class="mt-2 text-sm leading-6 text-slate-700">
+            1. Digite o CEP. 2. Escolha a unidade. 3. Selecione o horario.
+          </p>
+        </div>
         <div
           v-for="card in statCards"
           :key="card.label"
@@ -54,6 +62,8 @@
 
     <div
       v-if="feedback.message"
+      role="alert"
+      aria-live="polite"
       class="rounded-3xl border px-4 py-3 text-sm"
       :class="
         feedback.type === 'error'
@@ -89,9 +99,9 @@
           </div>
           <div v-else class="grid gap-4 lg:grid-cols-2">
             <article
-              v-for="unit in nearbyUnits"
-              :key="unit.id"
-              class="cursor-pointer rounded-3xl border p-4 transition"
+            v-for="unit in nearbyUnits"
+            :key="unit.id"
+            class="cursor-pointer rounded-3xl border p-4 transition"
               :class="
                 String(unit.id) === String(selectedUnitId)
                   ? 'border-susBlue bg-susBlue-soft/70 shadow-card'
@@ -118,7 +128,7 @@
                   CEP {{ formatCep(unit.cep) }}
                 </p>
                 <BaseButton size="sm" :variant="String(unit.id) === String(selectedUnitId) ? 'primary' : 'ghost'">
-                  Agendar
+                  Agendar nesta unidade
                 </BaseButton>
               </div>
             </article>
@@ -128,8 +138,8 @@
 
       <div class="space-y-6">
         <BaseCard
-          title="Agendar atendimento"
-          subtitle="Escolha uma unidade, selecione a especialidade e confirme o horario."
+          title="Escolher horario"
+          subtitle="Siga a ordem: unidade, especialidade e horario."
         >
           <div v-if="!selectedUnit" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
             Selecione uma unidade no mapa ou na lista para continuar.
@@ -216,7 +226,7 @@
                 :disabled="!selectedScheduleId || !user"
                 @click="handleCreateAppointment"
               >
-                Confirmar agendamento
+                Confirmar meu agendamento
               </BaseButton>
             </div>
           </template>
@@ -224,7 +234,7 @@
 
         <BaseCard
           title="Meus agendamentos"
-          subtitle="Acompanhe o andamento dos seus pedidos no sistema."
+          subtitle="Acompanhe aqui seus pedidos de consulta."
         >
           <div
             v-if="loading.appointments"
@@ -366,24 +376,24 @@ const filteredSchedules = computed(() =>
 const searchHelperText = computed(() =>
   searchResult.value?.label
     ? `Mapa centralizado em ${searchResult.value.label}.`
-    : 'Digite um CEP valido para posicionar o mapa e ordenar as unidades por proximidade.',
+    : 'Digite um CEP valido para ver no mapa as unidades mais proximas.',
 )
 
 const statCards = computed(() => [
   {
-    label: 'Unidades no mapa',
+    label: 'Unidades encontradas',
     value: unitsWithDistance.value.length,
-    description: 'Locais com coordenadas prontas para visualizacao.',
+    description: 'Locais que podem aparecer no mapa.',
   },
   {
-    label: 'Unidades proximas',
+    label: 'Mais perto de voce',
     value: nearbyUnits.value.length,
-    description: 'Resultado ordenado pela distancia a partir do CEP buscado.',
+    description: 'Lista organizada pela distancia do CEP.',
   },
   {
-    label: 'Meus agendamentos',
+    label: 'Meus pedidos',
     value: myAppointments.value.length,
-    description: 'Pedidos registrados nesta conta do Supabase.',
+    description: 'Agendamentos registrados nesta conta.',
   },
 ])
 

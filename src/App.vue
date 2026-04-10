@@ -10,7 +10,7 @@
     </main>
 
     <div v-else class="page-shell">
-      <header class="glass-panel mb-5 flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+      <header class="glass-panel mb-4 flex flex-col gap-4 px-4 py-4 sm:px-5 lg:mb-5 lg:flex-row lg:items-center lg:justify-between lg:px-6">
         <div class="flex items-center gap-4">
           <div
             class="flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-susBlue to-susGreen text-xl font-bold text-white shadow-card"
@@ -18,13 +18,13 @@
             SUS
           </div>
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.26em] text-susBlue">
-              Agendamento digital
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-susBlue">
+              Sistema publico de saude
             </p>
-            <h1 class="font-display text-2xl font-semibold text-ink">
+            <h1 class="font-display text-xl font-semibold text-ink sm:text-2xl">
               {{ pageTitle }}
             </h1>
-            <p class="text-sm text-slate-600">
+            <p class="text-sm leading-6 text-slate-700">
               {{ pageSubtitle }}
             </p>
           </div>
@@ -69,13 +69,13 @@ const { authReady, logout, profile, user } = useAuth()
 const isLoginPage = computed(() => route.name === 'login')
 
 const pageTitle = computed(() =>
-  route.name === 'admin' ? 'Centro de comando do SUS' : 'Busca e agendamento do paciente',
+  route.name === 'admin' ? 'Gestao de agendamentos do SUS' : 'Marcar consulta pelo celular',
 )
 
 const pageSubtitle = computed(() =>
   route.name === 'admin'
-    ? 'Organize a oferta de horarios, unidades e acompanhe a operacao em tempo real.'
-    : 'Encontre unidades proximas pelo CEP e reserve seu atendimento em poucos passos.',
+    ? 'Cadastre horarios, acompanhe a fila e mantenha o atendimento organizado.'
+    : 'Busque unidades pelo CEP, veja horarios disponiveis e confirme seu pedido com poucos toques.',
 )
 
 async function handleLogout() {
