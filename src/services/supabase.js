@@ -1,6 +1,175 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://abcdfxyz123.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZicGJid2VuZXlyeG95bWR1bWZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NjM4NTcsImV4cCI6MjA5MTMzOTg1N30.Qeh55YyDQ10RfagV5l7hFCQOd5xmgAd-ERojBjR62R4'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ''
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
+
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
+
+export const TABLES = {
+  profiles: 'profiles',
+  units: 'units',
+  specialties: 'specialties',
+  schedules: 'schedules',
+  appointments: 'appointments',
+}
+
+export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder-key', {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+})
+
+export function assertSupabaseConfigured() {
+  if (!isSupabaseConfigured) {
+    throw new Error(
+      'Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env antes de usar autenticacao ou banco.',
+    )
+  }
+
+  const projectRefFromUrl = getProjectRefFromUrl(supabaseUrl)
+
+  if (!projectRefFromUrl || projectRefFromUrl === 'your-project-id' || supabaseUrl.includes('placeholder')) {
+    throw new Error(
+      'O VITE_SUPABASE_URL ainda esta com valor de exemplo. Substitua pelo host real do seu projeto Supabase.',
+    )
+  }
+
+  const projectRefFromKey = getProjectRefFromAnonKey(supabaseAnonKey)
+
+  if (projectRefFromKey && projectRefFromUrl !== projectRefFromKey) {
+    throw new Error(
+      'A URL do Supabase e a anon key pertencem a projetos diferentes. Revise o arquivo .env.',
+    )
+  }
+}
+
+function getProjectRefFromUrl(url) {
+  try {
+    return new URL(url).hostname.split('.')[0] ?? ''
+  } catch {
+    return ''
+  }
+}
+
+function getProjectRefFromAnonKey(token) {
+  try {
+    const payload = token.split('.')[1]
+
+    if (!payload) {
+      return ''
+    }
+
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=')
+    const decoded = JSON.parse(atob(padded))
+
+    return decoded?.ref ?? ''
+  } catch {
+    return ''
+  }
+}
+
+export function getHomeRouteByRole(role = 'paciente') {
+  return role === 'admin' ? '/admin' : '/paciente'
+}
+
+export function getRoleFromUser(user) {
+  return user?.app_metadata?.role ?? user?.user_metadata?.role ?? 'paciente'
+}
+
+export function normalizeProfile(rawProfile = {}, fallbackUser = null) {
+  if (!rawProfile?.id && !fallbackUser?.id) {
+    return null
+  }
+
+  return {
+    id: rawProfile.id ?? fallbackUser?.id ?? null,
+    email: rawProfile.email ?? fallbackUser?.email ?? '',
+    full_name:
+      rawProfile.full_name ??
+      fallbackUser?.user_metadata?.full_name ??
+      fallbackUser?.user_metadata?.name ??
+      '',
+    role: rawProfile.role ?? getRoleFromUser(fallbackUser),
+    created_at: rawProfile.created_at ?? null,
+    updated_at: rawProfile.updated_at ?? null,
+  }
+}
+
+export async function getSession() {
+  assertSupabaseConfigured()
+
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession()
+
+  if (error) {
+    throw error
+  }
+
+  return session
+}
+
+export async function getProfileByUserId(userId) {
+  if (!userId) {
+    return null
+  }
+
+  assertSupabaseConfigured()
+
+  const { data, error } = await supabase
+    .from(TABLES.profiles)
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return normalizeProfile(data)
+}
+
+export async function ensureProfile({
+  userId,
+  email,
+  fullName = '',
+  role = 'paciente',
+}) {
+  assertSupabaseConfigured()
+
+  const payload = {
+    id: userId,
+    full_name: fullName,
+    role,
+  }
+
+  let { error } = await supabase
+    .from(TABLES.profiles)
+    .upsert(payload, { onConflict: 'id' })
+
+  if (error?.code === '42703' && error.message?.includes('full_name')) {
+    const retry = await supabase
+      .from(TABLES.profiles)
+      .upsert(
+        {
+          id: userId,
+          role,
+        },
+        { onConflict: 'id' },
+      )
+
+    error = retry.error
+  }
+
+  if (error) {
+    throw error
+  }
+
+  const profile = await getProfileByUserId(userId)
+  return profile ?? normalizeProfile({ id: userId, full_name: fullName, role }, { id: userId, email })
+}

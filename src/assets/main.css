@@ -1,5 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-slate-100 font-sans text-slate-800 antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(29, 95, 209, 0.22), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(15, 155, 109, 0.16), transparent 28%),
+      linear-gradient(180deg, #f8fbff 0%, #edf4fb 100%);
+    background-attachment: fixed;
+  }
+
+  #app {
+    @apply min-h-screen;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply rounded-[28px] border border-white/70 bg-white/85 shadow-soft backdrop-blur-xl;
+  }
+
+  .section-panel {
+    @apply glass-panel p-6 lg:p-7;
+  }
+
+  .input-field {
+    @apply w-full rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-susBlue focus:ring-4 focus:ring-susBlue/10 disabled:cursor-not-allowed disabled:bg-slate-100;
+  }
+
+  .select-field {
+    @apply input-field appearance-none;
+  }
+
+  .label-text {
+    @apply mb-2 block text-sm font-semibold text-slate-700;
+  }
+
+  .helper-text {
+    @apply text-xs text-slate-500;
+  }
+
+  .page-shell {
+    @apply mx-auto max-w-7xl px-4 py-5 lg:px-6;
+  }
+
+  .page-heading {
+    @apply font-display text-3xl font-bold tracking-tight text-ink lg:text-4xl;
+  }
+
+  .page-subtitle {
+    @apply mt-2 max-w-2xl text-sm leading-6 text-slate-600 lg:text-base;
+  }
+
+  .field-surface {
+    @apply rounded-3xl border border-slate-200/80 bg-slate-50/70 p-4;
+  }
+
+  .dot-grid {
+    background-image: theme('backgroundImage.hero-grid');
+    background-size: 18px 18px;
+  }
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 24px;
+  font-family: 'Manrope', ui-sans-serif, system-ui;
+}

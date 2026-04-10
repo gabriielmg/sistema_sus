@@ -1,27 +1,70 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { supabase } from '../services/supabase'
-import LoginView from '../views/LoginView.vue'
-import PacienteView from '../views/PacienteView.vue'
-import AdminView from '../views/AdminView.vue'
+import LoginView from '@/views/LoginView.vue'
+import PacienteView from '@/views/PacienteView.vue'
+import AdminView from '@/views/AdminView.vue'
+import {
+  getHomeRouteByRole,
+  getProfileByUserId,
+  getRoleFromUser,
+  getSession,
+} from '@/services/supabase'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'login', component: LoginView },
-    { path: '/paciente', name: 'paciente', component: PacienteView, meta: { requiresAuth: true } },
-    { path: '/admin', name: 'admin', component: AdminView, meta: { requiresAuth: true } }
-  ]
+    {
+      path: '/',
+      name: 'login',
+      component: LoginView,
+      meta: {
+        guestOnly: true,
+      },
+    },
+    {
+      path: '/paciente',
+      name: 'paciente',
+      component: PacienteView,
+      meta: {
+        requiresAuth: true,
+        role: 'paciente',
+      },
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: AdminView,
+      meta: {
+        requiresAuth: true,
+        role: 'admin',
+      },
+    },
+  ],
 })
 
-// Proteção de rotas (Segurança: impede entrar nas telas sem fazer login)
-router.beforeEach(async (to, from, next) => {
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  if (to.meta.requiresAuth && !session) {
-    next('/') // Se tentar acessar sem login, joga de volta pra tela inicial
-  } else {
-    next() // Se estiver tudo ok, deixa passar
+router.beforeEach(async (to) => {
+  const session = await getSession().catch(() => null)
+
+  if (!session && to.meta.requiresAuth) {
+    return { name: 'login' }
   }
+
+  if (!session) {
+    return true
+  }
+
+  const profile = await getProfileByUserId(session.user.id).catch(() => null)
+  const resolvedRole = profile?.role ?? getRoleFromUser(session.user)
+  const homeRoute = getHomeRouteByRole(resolvedRole)
+
+  if (to.meta.guestOnly) {
+    return to.path === homeRoute ? true : homeRoute
+  }
+
+  if (to.meta.role && resolvedRole !== to.meta.role) {
+    return to.path === homeRoute ? true : homeRoute
+  }
+
+  return true
 })
 
 export default router
