@@ -1,9 +1,33 @@
-import { supabase, TABLES } from '@/services/supabase'
+import { assertSupabaseConfigured, supabase, TABLES } from '@/services/supabase'
 
 const unitSelect =
-  'id, name, cep, street, neighborhood, city, state, address_label, latitude, longitude, created_at'
+  'id, name, cep, street, neighborhood, city, state, address_label, image_url, latitude, longitude, created_at'
 
 const specialtySelect = 'id, name, created_at'
+
+const doctorSelect = `
+  id,
+  unit_id,
+  specialty_id,
+  full_name,
+  crm,
+  notes,
+  is_active,
+  created_at,
+  updated_at,
+  unit:units!doctors_unit_id_fkey(
+    id,
+    name,
+    city,
+    state,
+    address_label,
+    image_url
+  ),
+  specialty:specialties!doctors_specialty_id_fkey(
+    id,
+    name
+  )
+`
 
 const scheduleSelect = `
   id,
@@ -22,12 +46,21 @@ const scheduleSelect = `
     city,
     state,
     address_label,
+    image_url,
     latitude,
     longitude
   ),
   specialty:specialties!schedules_specialty_id_fkey(
     id,
     name
+  ),
+  doctor:doctors!schedules_doctor_id_fkey(
+    id,
+    full_name,
+    crm,
+    notes,
+    unit_id,
+    specialty_id
   )
 `
 
@@ -53,6 +86,7 @@ const appointmentSelect = `
       city,
       state,
       address_label,
+      image_url,
       latitude,
       longitude
     ),
@@ -90,6 +124,44 @@ export async function createUnit(payload) {
   return data
 }
 
+export async function uploadUnitImage(file) {
+  assertSupabaseConfigured()
+
+  if (!(file instanceof File)) {
+    throw new Error('Selecione uma imagem valida para a unidade.')
+  }
+
+  if (!String(file.type).startsWith('image/')) {
+    throw new Error('Envie um arquivo de imagem para a foto da unidade.')
+  }
+
+  const fileExtension = String(file.name).split('.').pop()?.toLowerCase() || 'jpg'
+  const fileName =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+  const filePath = `units/${fileName}.${fileExtension}`
+
+  const { error } = await supabase.storage
+    .from('unit-images')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type,
+    })
+
+  if (error) {
+    throw error
+  }
+
+  const { data } = supabase.storage.from('unit-images').getPublicUrl(filePath)
+
+  return {
+    path: filePath,
+    publicUrl: data.publicUrl,
+  }
+}
+
 export async function fetchSpecialties() {
   const { data, error } = await supabase
     .from(TABLES.specialties)
@@ -108,6 +180,48 @@ export async function createSpecialty(name) {
     .from(TABLES.specialties)
     .insert([{ name }])
     .select(specialtySelect)
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  return data
+}
+
+export async function fetchDoctors() {
+  const { data, error } = await supabase
+    .from(TABLES.doctors)
+    .select(doctorSelect)
+    .order('full_name', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? []
+}
+
+export async function createDoctor(payload) {
+  const { data, error } = await supabase
+    .from(TABLES.doctors)
+    .insert([payload])
+    .select(doctorSelect)
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  return data
+}
+
+export async function updateDoctor(doctorId, payload) {
+  const { data, error } = await supabase
+    .from(TABLES.doctors)
+    .update(payload)
+    .eq('id', doctorId)
+    .select(doctorSelect)
     .single()
 
   if (error) {
@@ -151,6 +265,31 @@ export async function fetchAvailableSchedulesByUnit(unitId) {
   return data ?? []
 }
 
+export async function fetchAvailableSchedulesByUnitAndSpecialty(unitId, specialtyId) {
+  let query = supabase
+    .from(TABLES.schedules)
+    .select(scheduleSelect)
+    .eq('is_available', true)
+    .gte('starts_at', new Date().toISOString())
+    .order('starts_at', { ascending: true })
+
+  if (unitId) {
+    query = query.eq('unit_id', unitId)
+  }
+
+  if (specialtyId) {
+    query = query.eq('specialty_id', specialtyId)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? []
+}
+
 export async function createSchedule(payload) {
   const { data, error } = await supabase
     .from(TABLES.schedules)
@@ -161,6 +300,21 @@ export async function createSchedule(payload) {
         status: 'disponivel',
       },
     ])
+    .select(scheduleSelect)
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  return data
+}
+
+export async function updateSchedule(scheduleId, payload) {
+  const { data, error } = await supabase
+    .from(TABLES.schedules)
+    .update(payload)
+    .eq('id', scheduleId)
     .select(scheduleSelect)
     .single()
 
@@ -223,6 +377,29 @@ export async function updateAppointmentStatus(appointmentId, status) {
     .from(TABLES.appointments)
     .update({
       status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', appointmentId)
+    .select(appointmentSelect)
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  return data
+}
+
+export async function cancelAppointment(appointmentId) {
+  return updateAppointmentStatus(appointmentId, 'cancelado')
+}
+
+export async function rescheduleAppointment({ appointmentId, scheduleId }) {
+  const { data, error } = await supabase
+    .from(TABLES.appointments)
+    .update({
+      schedule_id: scheduleId,
+      status: 'pendente',
       updated_at: new Date().toISOString(),
     })
     .eq('id', appointmentId)

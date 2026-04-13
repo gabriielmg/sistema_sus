@@ -29,6 +29,9 @@ async function syncProfile(nextUser) {
         userId: nextUser.id,
         email: nextUser.email,
         fullName: nextUser.user_metadata?.full_name ?? '',
+        cpf: nextUser.user_metadata?.cpf ?? '',
+        phone: nextUser.phone ?? nextUser.user_metadata?.phone ?? '',
+        unitId: nextUser.user_metadata?.unit_id ?? null,
         role: getRoleFromUser(nextUser),
       })
     }
@@ -132,6 +135,9 @@ export function useAuth() {
         email: data.user.email,
         fullName,
         role: getRoleFromUser(data.user),
+        cpf: data.user.user_metadata?.cpf ?? '',
+        phone: data.user.phone ?? data.user.user_metadata?.phone ?? '',
+        unitId: data.user.user_metadata?.unit_id ?? null,
       })
     }
 
@@ -145,6 +151,73 @@ export function useAuth() {
       session: data.session,
       profile: profile.value,
       requiresEmailConfirmation: Boolean(data.user && !data.session),
+    }
+  }
+
+  async function sendLoginCode({ cpf, phone }) {
+    assertSupabaseConfigured()
+
+    const normalizedPhone = normalizePhoneNumber(phone)
+
+    if (!normalizedPhone) {
+      throw new Error('Informe um celular valido para receber o codigo.')
+    }
+
+    const { data, error } = await supabase.auth.signInWithOtp({
+      phone: normalizedPhone,
+      options: {
+        shouldCreateUser: true,
+      },
+    })
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      phone: normalizedPhone,
+      cpf: String(cpf || '').replace(/\D/g, ''),
+      sent: Boolean(data?.user || data?.session || true),
+    }
+  }
+
+  async function verifyLoginCode({ cpf, phone, code, fullName = '' }) {
+    assertSupabaseConfigured()
+
+    const normalizedPhone = normalizePhoneNumber(phone)
+
+    if (!normalizedPhone) {
+      throw new Error('Informe um celular valido para continuar.')
+    }
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      phone: normalizedPhone,
+      token: String(code || '').trim(),
+      type: 'sms',
+    })
+
+    if (error) {
+      throw error
+    }
+
+    if (data?.user) {
+      user.value = data.user
+      await ensureProfile({
+        userId: data.user.id,
+        email: data.user.email ?? normalizedPhone,
+        fullName,
+        role: getRoleFromUser(data.user),
+        cpf: String(cpf || '').replace(/\D/g, ''),
+        phone: normalizedPhone,
+        unitId: null,
+      })
+      await syncProfile(data.user)
+    }
+
+    return {
+      user: data.user,
+      session: data.session,
+      profile: profile.value,
     }
   }
 
@@ -169,7 +242,23 @@ export function useAuth() {
     isAdmin: computed(() => role.value === 'admin'),
     signInWithPassword,
     signUpWithPassword,
+    sendLoginCode,
+    verifyLoginCode,
     logout,
     refreshProfile: () => syncProfile(user.value),
   }
+}
+
+function normalizePhoneNumber(value = '') {
+  const digits = String(value).replace(/\D/g, '')
+
+  if (!digits) {
+    return ''
+  }
+
+  if (digits.startsWith('55')) {
+    return `+${digits}`
+  }
+
+  return `+55${digits}`
 }

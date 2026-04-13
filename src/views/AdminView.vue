@@ -89,7 +89,7 @@
                         {{ appointment.patient?.full_name || appointment.patient?.email || 'Paciente sem nome' }}
                       </h4>
                       <p class="text-sm text-slate-600">
-                        {{ appointment.schedule?.unit?.name || 'Unidade nao informada' }} •
+                        {{ appointment.schedule?.unit?.name || 'Unidade nao informada' }} -
                         {{ appointment.schedule?.specialty?.name || 'Especialidade nao informada' }}
                       </p>
                     </div>
@@ -124,7 +124,7 @@
                     <div>
                       <h4 class="font-semibold text-slate-900">{{ schedule.unit?.name }}</h4>
                       <p class="text-sm text-slate-600">
-                        {{ schedule.specialty?.name }} • {{ formatDateTime(schedule.starts_at) }}
+                        {{ schedule.specialty?.name }} - {{ formatDateTime(schedule.starts_at) }}
                       </p>
                     </div>
                     <StatusBadge :status="schedule.status" />
@@ -138,9 +138,12 @@
         <div v-if="activeSection === 'units'" class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
           <BaseCard
             title="Cadastrar unidade"
-            subtitle="Digite o CEP para completar o endereco e salvar a unidade no Supabase."
+            subtitle="O administrador cadastra a unidade com CEP, foto e coordenadas para a busca por proximidade."
           >
-            <form class="space-y-4" @submit.prevent="handleCreateUnit">
+            <div v-if="!isAdmin" class="rounded-3xl bg-slate-50 px-4 py-8 text-sm text-slate-600">
+              Esta conta nao possui acesso total ao sistema. O cadastro de novas unidades fica disponivel apenas para o administrador.
+            </div>
+            <form v-else class="space-y-4" @submit.prevent="handleCreateUnit">
               <div>
                 <label class="label-text" for="unit-name">Nome da unidade</label>
                 <input
@@ -216,7 +219,30 @@
                 </div>
               </div>
 
-              <BaseButton type="submit" block :loading="loading.unit" :disabled="!unitForm.name || !unitForm.cep">
+              <div>
+                <label class="label-text" for="unit-image">Foto da unidade</label>
+                <input
+                  id="unit-image"
+                  type="file"
+                  class="input-field"
+                  accept="image/*"
+                  @change="handleUnitImageChange"
+                />
+                <p class="helper-text mt-2">
+                  Envie uma foto da fachada ou da recepcao para identificar a unidade no sistema.
+                </p>
+              </div>
+
+              <div v-if="unitImagePreview" class="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
+                <img :src="unitImagePreview" alt="Preview da unidade" class="h-48 w-full object-cover" />
+              </div>
+
+              <BaseButton
+                type="submit"
+                block
+                :loading="loading.unit"
+                :disabled="!unitForm.name || !unitForm.cep || !unitForm.street || !unitForm.city || !unitForm.state"
+              >
                 Salvar unidade
               </BaseButton>
             </form>
@@ -224,26 +250,31 @@
 
           <BaseCard
             title="Unidades cadastradas"
-            subtitle="As coordenadas sao calculadas na criacao para o mapa do paciente."
+            subtitle="Essas unidades formam a rede do seu sistema e aparecem para o paciente por proximidade."
           >
-            <div v-if="!units.length" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+            <div v-if="!visibleUnits.length" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
               Nenhuma unidade cadastrada ainda.
             </div>
             <div v-else class="space-y-3">
               <article
-                v-for="unit in units"
+                v-for="unit in visibleUnits"
                 :key="unit.id"
                 class="rounded-3xl border border-slate-200/70 bg-slate-50/80 p-4"
               >
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <h3 class="font-semibold text-slate-900">{{ unit.name }}</h3>
-                    <p class="mt-1 text-sm text-slate-600">
-                      {{ unit.address_label || buildUnitAddress(unit) || 'Endereco pendente' }}
-                    </p>
-                    <p class="mt-2 text-xs uppercase tracking-[0.2em] text-slate-500">
-                      CEP {{ formatCep(unit.cep) }}
-                    </p>
+                  <div class="flex items-start gap-4">
+                    <div v-if="unit.image_url" class="h-20 w-20 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                      <img :src="unit.image_url" :alt="`Foto da unidade ${unit.name}`" class="h-full w-full object-cover" />
+                    </div>
+                    <div>
+                      <h3 class="font-semibold text-slate-900">{{ unit.name }}</h3>
+                      <p class="mt-1 text-sm text-slate-600">
+                        {{ unit.address_label || buildUnitAddress(unit) || 'Endereco pendente' }}
+                      </p>
+                      <p class="mt-2 text-xs uppercase tracking-[0.2em] text-slate-500">
+                        CEP {{ formatCep(unit.cep) }}
+                      </p>
+                    </div>
                   </div>
                   <div class="flex items-center gap-2">
                     <StatusBadge :status="unit.latitude && unit.longitude ? 'disponivel' : 'indisponivel'" />
@@ -254,12 +285,18 @@
           </BaseCard>
         </div>
 
-        <div v-if="activeSection === 'specialties'" class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+        <div
+          v-if="activeSection === 'specialties'"
+          class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]"
+        >
           <BaseCard
             title="Nova especialidade"
             subtitle="Cadastre especialidades para alimentar os horarios e o fluxo de agendamento."
           >
-            <form class="space-y-4" @submit.prevent="handleCreateSpecialty">
+            <div v-if="isManager" class="rounded-3xl bg-slate-50 px-4 py-8 text-sm text-slate-600">
+              Esta conta é de gestor. Especialidades ficam sob controle do administrador.
+            </div>
+            <form v-else class="space-y-4" @submit.prevent="handleCreateSpecialty">
               <div>
                 <label class="label-text" for="specialty-name">Especialidade</label>
                 <input
@@ -299,6 +336,120 @@
           </BaseCard>
         </div>
 
+        <div
+          v-if="activeSection === 'doctors'"
+          class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]"
+        >
+          <BaseCard
+            title="Cadastrar médico"
+            subtitle="Vincule o profissional a uma unidade e especialidade."
+          >
+            <form class="space-y-4" @submit.prevent="handleCreateDoctor">
+              <div>
+                <label class="label-text" for="doctor-name">Nome do médico</label>
+                <input
+                  id="doctor-name"
+                  v-model.trim="doctorForm.fullName"
+                  type="text"
+                  class="input-field"
+                  placeholder="Ex.: Dra. Maria Silva"
+                  required
+                />
+              </div>
+
+              <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label class="label-text" for="doctor-crm">CRM / CRO / CRP</label>
+                  <input
+                    id="doctor-crm"
+                    v-model.trim="doctorForm.crm"
+                    type="text"
+                    class="input-field"
+                    placeholder="Ex.: CRM 123456"
+                    required
+                  />
+                </div>
+                <div>
+                  <label class="label-text" for="doctor-active">Status</label>
+                  <select id="doctor-active" v-model="doctorForm.isActive" class="select-field">
+                    <option :value="true">Ativo</option>
+                    <option :value="false">Inativo</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label class="label-text" for="doctor-unit">Unidade</label>
+                  <select id="doctor-unit" v-model="doctorForm.unitId" class="select-field" required>
+                    <option value="">Selecione uma unidade</option>
+                    <option v-for="unit in visibleUnits" :key="unit.id" :value="String(unit.id)">
+                      {{ unit.name }}
+                    </option>
+                  </select>
+                </div>
+                <div>
+                  <label class="label-text" for="doctor-specialty">Especialidade</label>
+                  <select id="doctor-specialty" v-model="doctorForm.specialtyId" class="select-field" required>
+                    <option value="">Selecione uma especialidade</option>
+                    <option v-for="specialty in specialties" :key="specialty.id" :value="String(specialty.id)">
+                      {{ specialty.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="label-text" for="doctor-notes">Observações</label>
+                <textarea
+                  id="doctor-notes"
+                  v-model.trim="doctorForm.notes"
+                  class="input-field min-h-28"
+                  placeholder="Ex.: Atende à tarde, faz retorno em 15 dias."
+                ></textarea>
+              </div>
+
+              <BaseButton
+                type="submit"
+                block
+                :loading="loading.doctor"
+                :disabled="!doctorForm.fullName || !doctorForm.crm || !doctorForm.unitId || !doctorForm.specialtyId"
+              >
+                Salvar médico
+              </BaseButton>
+            </form>
+          </BaseCard>
+
+          <BaseCard
+            title="Médicos cadastrados"
+            subtitle="Veja quem está vinculado a cada unidade."
+          >
+            <div v-if="!visibleDoctors.length" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+              Nenhum médico cadastrado.
+            </div>
+            <div v-else class="space-y-3">
+              <article
+                v-for="doctor in visibleDoctors"
+                :key="doctor.id"
+                class="rounded-3xl border border-slate-200/70 bg-slate-50/80 p-4"
+              >
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <h3 class="font-semibold text-slate-900">{{ doctor.full_name }}</h3>
+                    <p class="mt-1 text-sm text-slate-600">
+                      {{ doctor.specialty?.name }} - {{ doctor.unit?.name }}
+                    </p>
+                    <p class="mt-2 text-sm text-slate-500">
+                      {{ doctor.crm }} · {{ doctor.notes || 'Sem observações' }}
+                    </p>
+                  </div>
+                  <StatusBadge :status="doctor.is_active ? 'disponivel' : 'indisponivel'" />
+                </div>
+              </article>
+            </div>
+          </BaseCard>
+        </div>
+
         <div v-if="activeSection === 'schedules'" class="grid gap-6 xl:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)]">
           <BaseCard
             title="Criar horario"
@@ -309,7 +460,7 @@
                 <label class="label-text" for="schedule-unit">Unidade</label>
                 <select id="schedule-unit" v-model="scheduleForm.unitId" class="select-field" required>
                   <option value="">Selecione uma unidade</option>
-                  <option v-for="unit in units" :key="unit.id" :value="String(unit.id)">
+                  <option v-for="unit in visibleUnits" :key="unit.id" :value="String(unit.id)">
                     {{ unit.name }}
                   </option>
                 </select>
@@ -326,6 +477,20 @@
                   <option value="">Selecione uma especialidade</option>
                   <option v-for="specialty in specialties" :key="specialty.id" :value="String(specialty.id)">
                     {{ specialty.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label class="label-text" for="schedule-doctor">Médico</label>
+                <select id="schedule-doctor" v-model="scheduleForm.doctorId" class="select-field">
+                  <option value="">Opcional: selecione um médico</option>
+                  <option
+                    v-for="doctor in doctorsForSelectedUnit"
+                    :key="doctor.id"
+                    :value="String(doctor.id)"
+                  >
+                    {{ doctor.full_name }}
                   </option>
                 </select>
               </div>
@@ -369,7 +534,7 @@
                   <div>
                     <h3 class="font-semibold text-slate-900">{{ schedule.unit?.name }}</h3>
                     <p class="mt-1 text-sm text-slate-600">
-                      {{ schedule.specialty?.name }} • {{ formatDateTime(schedule.starts_at) }}
+                      {{ schedule.specialty?.name }} - {{ formatDateTime(schedule.starts_at) }}
                     </p>
                   </div>
                   <StatusBadge :status="schedule.status" />
@@ -450,32 +615,29 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import AdminSidebar from '@/components/layout/AdminSidebar.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
+import { useAuth } from '@/composables/useAuth'
+import { buildAddressFromViaCep, fetchAddressByCep, geocodeAddress } from '@/services/api'
 import {
-  buildAddressFromViaCep,
-  fetchAddressByCep,
-  geocodeAddress,
-} from '@/services/api'
-import {
+  createDoctor,
   createSchedule,
   createSpecialty,
   createUnit,
   fetchAppointments,
+  fetchDoctors,
   fetchSchedules,
   fetchSpecialties,
   fetchUnits,
+  uploadUnitImage,
+  updateDoctor,
   updateAppointmentStatus,
+  updateSchedule,
 } from '@/services/scheduling'
-import {
-  buildUnitAddress,
-  formatCep,
-  formatDateTime,
-  sanitizeCep,
-} from '@/utils/formatters'
+import { buildUnitAddress, formatCep, formatDateTime, sanitizeCep } from '@/utils/formatters'
 
 const menuItems = [
   {
@@ -497,6 +659,12 @@ const menuItems = [
     short: 'ES',
   },
   {
+    key: 'doctors',
+    label: 'Médicos',
+    description: 'Cadastro de profissionais por unidade.',
+    short: 'MD',
+  },
+  {
     key: 'schedules',
     label: 'Horarios',
     description: 'Oferta de slots disponiveis.',
@@ -513,10 +681,14 @@ const menuItems = [
 const activeSection = ref('dashboard')
 const units = ref([])
 const specialties = ref([])
+const doctors = ref([])
 const schedules = ref([])
 const appointments = ref([])
 const cepLookupState = ref('Digite o CEP da unidade para buscar o endereco via ViaCEP.')
 const cepLookupTimer = ref(null)
+const unitImageFile = ref(null)
+const unitImagePreview = ref('')
+const { profile } = useAuth()
 
 const unitForm = reactive({
   name: '',
@@ -531,9 +703,19 @@ const specialtyForm = reactive({
   name: '',
 })
 
+const doctorForm = reactive({
+  fullName: '',
+  crm: '',
+  notes: '',
+  unitId: '',
+  specialtyId: '',
+  isActive: true,
+})
+
 const scheduleForm = reactive({
   unitId: '',
   specialtyId: '',
+  doctorId: '',
   date: '',
   time: '',
 })
@@ -542,6 +724,7 @@ const loading = reactive({
   initial: true,
   unit: false,
   specialty: false,
+  doctor: false,
   schedule: false,
   appointments: false,
 })
@@ -557,11 +740,31 @@ const upcomingSchedules = computed(() =>
     .slice(0, 8),
 )
 
+const isAdmin = computed(() => profile.value?.role === 'admin')
+const isManager = computed(() => profile.value?.role === 'gestor')
+const managedUnitId = computed(() => profile.value?.unit_id ?? null)
+
+const visibleUnits = computed(() => {
+  if (isManager.value && managedUnitId.value) {
+    return units.value.filter((unit) => String(unit.id) === String(managedUnitId.value))
+  }
+
+  return units.value
+})
+
+const visibleDoctors = computed(() => {
+  if (isManager.value && managedUnitId.value) {
+    return doctors.value.filter((doctor) => String(doctor.unit_id) === String(managedUnitId.value))
+  }
+
+  return doctors.value
+})
+
 const statCards = computed(() => [
   {
     label: 'Unidades',
     value: units.value.length,
-    description: 'Locais cadastrados para o mapa e a oferta de horarios.',
+    description: 'Locais cadastrados para a oferta de horarios e o atendimento dos pacientes.',
   },
   {
     label: 'Especialidades',
@@ -580,10 +783,30 @@ const statCards = computed(() => [
   },
 ])
 
+const doctorsForSelectedUnit = computed(() => {
+  return visibleDoctors.value.filter((doctor) => {
+    const matchesUnit = !scheduleForm.unitId || String(doctor.unit_id) === String(scheduleForm.unitId)
+    const matchesSpecialty =
+      !scheduleForm.specialtyId || String(doctor.specialty_id) === String(scheduleForm.specialtyId)
+
+    return matchesUnit && matchesSpecialty
+  })
+})
+
 const cepLookupMessage = computed(() => cepLookupState.value)
 
 onMounted(async () => {
   await loadAdminData()
+})
+
+onBeforeUnmount(() => {
+  if (cepLookupTimer.value) {
+    clearTimeout(cepLookupTimer.value)
+  }
+
+  if (unitImagePreview.value) {
+    URL.revokeObjectURL(unitImagePreview.value)
+  }
 })
 
 async function loadAdminData() {
@@ -591,17 +814,24 @@ async function loadAdminData() {
   resetFeedback()
 
   try {
-    const [unitsData, specialtiesData, schedulesData, appointmentsData] = await Promise.all([
+    const [unitsData, specialtiesData, doctorsData, schedulesData, appointmentsData] = await Promise.all([
       fetchUnits(),
       fetchSpecialties(),
+      fetchDoctors(),
       fetchSchedules(),
       fetchAppointments(),
     ])
 
     units.value = unitsData
     specialties.value = specialtiesData
+    doctors.value = doctorsData ?? []
     schedules.value = schedulesData
     appointments.value = appointmentsData
+
+    if (isManager.value && managedUnitId.value) {
+      doctorForm.unitId = String(managedUnitId.value)
+      scheduleForm.unitId = String(managedUnitId.value)
+    }
   } catch (error) {
     setFeedback('error', mapDataError(error))
   } finally {
@@ -639,16 +869,39 @@ function handleUnitCepInput(value) {
   }, 450)
 }
 
+function handleUnitImageChange(event) {
+  const file = event.target?.files?.[0] ?? null
+  unitImageFile.value = file
+
+  if (unitImagePreview.value) {
+    URL.revokeObjectURL(unitImagePreview.value)
+    unitImagePreview.value = ''
+  }
+
+  if (file) {
+    unitImagePreview.value = URL.createObjectURL(file)
+  }
+}
+
 async function handleCreateUnit() {
   loading.unit = true
   resetFeedback()
 
   try {
+    if (!isAdmin.value) {
+      throw new Error('Apenas o administrador pode cadastrar novas unidades.')
+    }
+
     const addressLabel = [unitForm.street, unitForm.neighborhood, unitForm.city, unitForm.state, 'Brasil']
       .filter(Boolean)
       .join(', ')
 
     const coordinates = addressLabel ? await geocodeAddress(addressLabel) : null
+    const uploadedImage = unitImageFile.value ? await uploadUnitImage(unitImageFile.value) : null
+
+    if (!coordinates?.lat || !coordinates?.lng) {
+      throw new Error('Nao foi possivel obter as coordenadas dessa unidade. Revise o CEP e o endereco antes de salvar.')
+    }
 
     await createUnit({
       name: unitForm.name.trim(),
@@ -658,18 +911,14 @@ async function handleCreateUnit() {
       city: unitForm.city.trim(),
       state: unitForm.state.trim().toUpperCase(),
       address_label: addressLabel,
-      latitude: coordinates?.lat ?? null,
-      longitude: coordinates?.lng ?? null,
+      image_url: uploadedImage?.publicUrl ?? null,
+      latitude: coordinates.lat,
+      longitude: coordinates.lng,
     })
 
     units.value = await fetchUnits()
     resetUnitForm()
-    setFeedback(
-      'success',
-      coordinates
-        ? 'Unidade salva com sucesso.'
-        : 'Unidade salva, mas sem coordenadas. Revise o endereco se ela nao aparecer no mapa.',
-    )
+    setFeedback('success', 'Unidade salva com sucesso.')
     activeSection.value = 'units'
   } catch (error) {
     setFeedback('error', mapDataError(error))
@@ -694,6 +943,31 @@ async function handleCreateSpecialty() {
   }
 }
 
+async function handleCreateDoctor() {
+  loading.doctor = true
+  resetFeedback()
+
+  try {
+    await createDoctor({
+      full_name: doctorForm.fullName.trim(),
+      crm: doctorForm.crm.trim(),
+      notes: doctorForm.notes.trim(),
+      unit_id: Number(doctorForm.unitId),
+      specialty_id: Number(doctorForm.specialtyId),
+      is_active: doctorForm.isActive,
+    })
+
+    doctors.value = await fetchDoctors()
+    resetDoctorForm()
+    setFeedback('success', 'Médico salvo com sucesso.')
+    activeSection.value = 'doctors'
+  } catch (error) {
+    setFeedback('error', mapDataError(error))
+  } finally {
+    loading.doctor = false
+  }
+}
+
 async function handleCreateSchedule() {
   loading.schedule = true
   resetFeedback()
@@ -705,9 +979,17 @@ async function handleCreateSchedule() {
       throw new Error('Informe uma data e hora validas.')
     }
 
+    if (
+      scheduleForm.doctorId &&
+      !doctorsForSelectedUnit.value.some((doctor) => String(doctor.id) === String(scheduleForm.doctorId))
+    ) {
+      throw new Error('Selecione um médico compatível com a unidade e especialidade.')
+    }
+
     await createSchedule({
       unit_id: Number(scheduleForm.unitId),
       specialty_id: Number(scheduleForm.specialtyId),
+      doctor_id: scheduleForm.doctorId ? Number(scheduleForm.doctorId) : null,
       starts_at: startsAt.toISOString(),
     })
 
@@ -726,7 +1008,7 @@ async function handleUpdateAppointmentStatus(appointment, status) {
   resetFeedback()
 
   try {
-    await updateAppointmentStatus(appointment.id, status, appointment.schedule_id)
+    await updateAppointmentStatus(appointment.id, status)
     appointments.value = await fetchAppointments()
     schedules.value = await fetchSchedules()
     setFeedback(
@@ -749,14 +1031,29 @@ function resetUnitForm() {
   unitForm.neighborhood = ''
   unitForm.city = ''
   unitForm.state = ''
+  unitImageFile.value = null
+  if (unitImagePreview.value) {
+    URL.revokeObjectURL(unitImagePreview.value)
+  }
+  unitImagePreview.value = ''
   cepLookupState.value = 'Digite o CEP da unidade para buscar o endereco via ViaCEP.'
 }
 
 function resetScheduleForm() {
   scheduleForm.unitId = ''
   scheduleForm.specialtyId = ''
+  scheduleForm.doctorId = ''
   scheduleForm.date = ''
   scheduleForm.time = ''
+}
+
+function resetDoctorForm() {
+  doctorForm.fullName = ''
+  doctorForm.crm = ''
+  doctorForm.notes = ''
+  doctorForm.unitId = isManager.value && managedUnitId.value ? String(managedUnitId.value) : ''
+  doctorForm.specialtyId = ''
+  doctorForm.isActive = true
 }
 
 function setFeedback(type, message) {
@@ -774,6 +1071,10 @@ function mapDataError(error) {
 
   if (message.includes('duplicate')) {
     return 'Esse registro ja existe no banco de dados.'
+  }
+
+  if (message.includes('coordenadas') || message.includes('imagem') || message.includes('administrador')) {
+    return message
   }
 
   if (message.includes('Nao foi possivel')) {

@@ -9,6 +9,7 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 export const TABLES = {
   profiles: 'profiles',
   units: 'units',
+  doctors: 'doctors',
   specialties: 'specialties',
   schedules: 'schedules',
   appointments: 'appointments',
@@ -73,7 +74,7 @@ function getProjectRefFromAnonKey(token) {
 }
 
 export function getHomeRouteByRole(role = 'paciente') {
-  return role === 'admin' ? '/admin' : '/paciente'
+  return role === 'admin' || role === 'gestor' ? '/admin' : '/paciente'
 }
 
 export function getRoleFromUser(user) {
@@ -88,6 +89,9 @@ export function normalizeProfile(rawProfile = {}, fallbackUser = null) {
   return {
     id: rawProfile.id ?? fallbackUser?.id ?? null,
     email: rawProfile.email ?? fallbackUser?.email ?? '',
+    cpf: rawProfile.cpf ?? fallbackUser?.user_metadata?.cpf ?? '',
+    phone: rawProfile.phone ?? fallbackUser?.phone ?? fallbackUser?.user_metadata?.phone ?? '',
+    unit_id: rawProfile.unit_id ?? fallbackUser?.user_metadata?.unit_id ?? null,
     full_name:
       rawProfile.full_name ??
       fallbackUser?.user_metadata?.full_name ??
@@ -139,13 +143,20 @@ export async function ensureProfile({
   email,
   fullName = '',
   role = 'paciente',
+  cpf = '',
+  phone = '',
+  unitId = null,
 }) {
   assertSupabaseConfigured()
 
   const payload = {
     id: userId,
+    email,
     full_name: fullName,
     role,
+    cpf,
+    phone,
+    unit_id: unitId,
   }
 
   let { error } = await supabase

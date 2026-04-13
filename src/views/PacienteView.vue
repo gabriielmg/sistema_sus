@@ -1,62 +1,39 @@
 <template>
-  <div class="space-y-6">
-    <section class="glass-panel overflow-hidden p-6 lg:p-7">
-      <div class="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+  <div class="mx-auto max-w-5xl space-y-5 pb-8">
+    <section class="section-panel overflow-hidden">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.28em] text-susGreen">
-            Atendimento perto de voce
-          </p>
-          <h2 class="mt-3 font-display text-3xl font-semibold leading-tight text-ink">
-            Digite seu CEP, veja as unidades proximas e escolha um horario
-          </h2>
-          <p class="mt-3 max-w-3xl text-base leading-7 text-slate-700">
-            O sistema mostra no mapa as unidades cadastradas, ordena pela distancia e ajuda
-            voce a marcar o atendimento pelo celular.
+          <p class="text-xs font-semibold uppercase tracking-[0.26em] text-susGreen">Agendamento simples</p>
+          <h1 class="mt-2 font-display text-3xl font-semibold text-ink sm:text-4xl">
+            Marque sua consulta por etapas.
+          </h1>
+          <p class="mt-3 max-w-2xl text-base leading-7 text-slate-700">
+            Primeiro a unidade, depois o tipo de atendimento, depois o horario. No final voce recebe a confirmacao.
           </p>
         </div>
 
-        <form class="w-full max-w-xl" @submit.prevent="handleSearchCep">
-          <label class="label-text" for="search-cep">Digite seu CEP</label>
-          <div class="flex flex-col gap-3 sm:flex-row">
-            <input
-              id="search-cep"
-              :value="searchCep"
-              type="text"
-              maxlength="9"
-              class="input-field"
-              placeholder="00000-000"
-              inputmode="numeric"
-              enterkeyhint="search"
-              @input="handleSearchCepInput($event.target.value)"
-            />
-            <BaseButton type="submit" size="lg" :loading="loading.search" class="sm:min-w-[132px]">
-              Buscar
-            </BaseButton>
-          </div>
-          <p class="helper-text mt-2">
-            {{ searchHelperText }}
-          </p>
-        </form>
+        <div class="flex flex-wrap gap-2">
+          <BaseButton variant="ghost" size="sm" :loading="loading.location" @click="requestLocation">
+            Usar minha localizacao
+          </BaseButton>
+          <BaseButton variant="secondary" size="sm" @click="showAppointments = !showAppointments">
+            {{ showAppointments ? 'Ocultar agendamentos' : 'Ver agendamentos' }}
+          </BaseButton>
+        </div>
       </div>
 
-      <div class="mt-6 grid gap-3 md:grid-cols-3">
-        <div class="rounded-3xl border border-susBlue/10 bg-susBlue-soft/50 p-5">
-          <p class="text-sm font-semibold text-susBlue-dark">Como funciona</p>
-          <p class="mt-2 text-sm leading-6 text-slate-700">
-            1. Digite o CEP. 2. Escolha a unidade. 3. Selecione o horario.
-          </p>
-        </div>
-        <div
-          v-for="card in statCards"
-          :key="card.label"
-          class="rounded-3xl border border-slate-200/80 bg-slate-50/80 p-5"
+      <div class="mt-6 grid gap-3 sm:grid-cols-4">
+        <article
+          v-for="(item, index) in stepItems"
+          :key="item.key"
+          class="rounded-3xl border p-4 transition"
+          :class="currentStepIndex >= index ? 'border-susBlue bg-susBlue-soft/70' : 'border-slate-200 bg-slate-50/80'"
         >
-          <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-            {{ card.label }}
+          <p class="text-xs font-semibold uppercase tracking-[0.2em]" :class="currentStepIndex >= index ? 'text-susBlue-dark' : 'text-slate-500'">
+            Etapa {{ index + 1 }}
           </p>
-          <h3 class="mt-3 text-3xl font-bold text-ink">{{ card.value }}</h3>
-          <p class="mt-2 text-sm text-slate-600">{{ card.description }}</p>
-        </div>
+          <p class="mt-2 text-sm font-semibold text-ink">{{ item.label }}</p>
+        </article>
       </div>
     </section>
 
@@ -65,263 +42,256 @@
       role="alert"
       aria-live="polite"
       class="rounded-3xl border px-4 py-3 text-sm"
-      :class="
-        feedback.type === 'error'
-          ? 'border-rose-200 bg-rose-50 text-rose-700'
-          : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-      "
+      :class="feedback.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'"
     >
       {{ feedback.message }}
     </div>
 
-    <div class="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_380px]">
-      <div class="space-y-6">
-        <LeafletMap
-          :center="mapCenter"
-          :units="unitsWithDistance"
-          :selected-unit-id="selectedUnitId"
-          :search-label="searchResult?.label || ''"
-          @select-unit="handleSelectUnit"
-        />
+    <BaseCard v-if="step === 'unit'" title="Encontre a unidade mais proxima" subtitle="Escolha uma unidade para continuar.">
+      <div class="space-y-4">
+        <div v-if="loading.units" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+          Buscando unidades...
+        </div>
+        <div v-else-if="!orderedUnits.length" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+          Nenhuma unidade disponivel agora.
+        </div>
+        <div v-else class="space-y-3">
+          <div class="rounded-3xl border border-susBlue/10 bg-susBlue-soft/40 p-4">
+            <p class="text-sm font-semibold text-susBlue-dark">Sua localizacao</p>
+            <p class="mt-1 text-sm leading-6 text-slate-700">
+              {{ searchResult?.label || 'Toque em "Usar minha localizacao" para organizar a lista pelas unidades mais proximas.' }}
+            </p>
+          </div>
 
-        <BaseCard
-          title="Unidades proximas"
-          subtitle="Clique em uma unidade para abrir a etapa de agendamento."
-        >
-          <div v-if="loading.initial" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            Buscando unidades cadastradas...
-          </div>
-          <div
-            v-else-if="!unitsWithDistance.length"
-            class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500"
-          >
-            Nenhuma unidade com coordenadas disponiveis para exibir no mapa.
-          </div>
-          <div v-else class="grid gap-4 lg:grid-cols-2">
-            <article
-            v-for="unit in nearbyUnits"
+          <button
+            v-for="unit in orderedUnits.slice(0, 6)"
             :key="unit.id"
-            class="cursor-pointer rounded-3xl border p-4 transition"
-              :class="
-                String(unit.id) === String(selectedUnitId)
-                  ? 'border-susBlue bg-susBlue-soft/70 shadow-card'
-                  : 'border-slate-200/80 bg-slate-50/80 hover:border-susBlue/40 hover:bg-white'
-              "
-              @click="handleSelectUnit(unit)"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <h3 class="font-semibold text-slate-900">{{ unit.name }}</h3>
-                  <p class="mt-2 text-sm leading-6 text-slate-600">
-                    {{ unit.address_label || buildUnitAddress(unit) || 'Endereco indisponivel' }}
-                  </p>
-                </div>
-                <span
-                  class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-susBlue-dark shadow-sm"
-                >
-                  {{ unit.distanceLabel }}
-                </span>
-              </div>
-
-              <div class="mt-4 flex items-center justify-between gap-3">
-                <p class="text-xs uppercase tracking-[0.2em] text-slate-500">
-                  CEP {{ formatCep(unit.cep) }}
-                </p>
-                <BaseButton size="sm" :variant="String(unit.id) === String(selectedUnitId) ? 'primary' : 'ghost'">
-                  Agendar nesta unidade
-                </BaseButton>
-              </div>
-            </article>
-          </div>
-        </BaseCard>
-      </div>
-
-      <div class="space-y-6">
-        <BaseCard
-          title="Escolher horario"
-          subtitle="Siga a ordem: unidade, especialidade e horario."
-        >
-          <div v-if="!selectedUnit" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            Selecione uma unidade no mapa ou na lista para continuar.
-          </div>
-
-          <template v-else>
-            <div class="rounded-3xl bg-slate-50/80 p-4">
-              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Unidade selecionada
-              </p>
-              <h3 class="mt-2 text-lg font-semibold text-slate-900">{{ selectedUnit.name }}</h3>
-              <p class="mt-2 text-sm leading-6 text-slate-600">
-                {{ selectedUnit.address_label || buildUnitAddress(selectedUnit) || 'Endereco indisponivel' }}
-              </p>
-            </div>
-
-            <div class="mt-5 space-y-4">
-              <div>
-                <label class="label-text" for="patient-specialty">Especialidade</label>
-                <select
-                  id="patient-specialty"
-                  v-model="selectedSpecialtyId"
-                  class="select-field"
-                  :disabled="loading.schedules || !availableSpecialties.length"
-                >
-                  <option value="">Selecione uma especialidade</option>
-                  <option
-                    v-for="specialty in availableSpecialties"
-                    :key="specialty.id"
-                    :value="String(specialty.id)"
-                  >
-                    {{ specialty.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div>
-                <label class="label-text">Horarios disponiveis</label>
-                <div
-                  v-if="loading.schedules"
-                  class="rounded-3xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-500"
-                >
-                  Buscando horarios livres...
-                </div>
-                <div
-                  v-else-if="!filteredSchedules.length"
-                  class="rounded-3xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-500"
-                >
-                  Nenhum horario disponivel para essa combinacao.
-                </div>
-                <div v-else class="max-h-[320px] space-y-3 overflow-y-auto pr-1">
-                  <button
-                    v-for="schedule in filteredSchedules"
-                    :key="schedule.id"
-                    type="button"
-                    class="w-full rounded-3xl border p-4 text-left transition"
-                    :class="
-                      String(schedule.id) === String(selectedScheduleId)
-                        ? 'border-susGreen bg-susGreen-soft/60 shadow-card'
-                        : 'border-slate-200/80 bg-slate-50/80 hover:border-susGreen/40 hover:bg-white'
-                    "
-                    @click="selectedScheduleId = String(schedule.id)"
-                  >
-                    <div class="flex items-center justify-between gap-3">
-                      <div>
-                        <p class="font-semibold text-slate-900">
-                          {{ schedule.specialty?.name }}
-                        </p>
-                        <p class="mt-2 text-sm text-slate-600">
-                          {{ formatDateTime(schedule.starts_at) }}
-                        </p>
-                      </div>
-                      <StatusBadge status="disponivel" />
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              <BaseButton
-                block
-                variant="success"
-                size="lg"
-                :loading="loading.booking"
-                :disabled="!selectedScheduleId || !user"
-                @click="handleCreateAppointment"
-              >
-                Confirmar meu agendamento
-              </BaseButton>
-            </div>
-          </template>
-        </BaseCard>
-
-        <BaseCard
-          title="Meus agendamentos"
-          subtitle="Acompanhe aqui seus pedidos de consulta."
-        >
-          <div
-            v-if="loading.appointments"
-            class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500"
+            type="button"
+            class="w-full rounded-3xl border p-4 text-left transition"
+            :class="String(unit.id) === String(selectedUnitId) ? 'border-susBlue bg-susBlue-soft/60 shadow-card' : 'border-slate-200/80 bg-slate-50/80 hover:border-susBlue/40 hover:bg-white'"
+            @click="handleSelectUnit(unit)"
           >
-            Carregando seus agendamentos...
-          </div>
-          <div
-            v-else-if="!myAppointments.length"
-            class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500"
-          >
-            Nenhum agendamento encontrado para esta conta.
-          </div>
-          <div v-else class="space-y-3">
-            <article
-              v-for="appointment in myAppointments"
-              :key="appointment.id"
-              class="rounded-3xl border border-slate-200/80 bg-slate-50/80 p-4"
-            >
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <h3 class="font-semibold text-slate-900">
-                    {{ appointment.schedule?.unit?.name || 'Unidade nao informada' }}
-                  </h3>
-                  <p class="mt-2 text-sm text-slate-600">
-                    {{ appointment.schedule?.specialty?.name || 'Especialidade nao informada' }}
-                  </p>
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-4">
+                <div v-if="unit.image_url" class="h-20 w-20 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <img :src="unit.image_url" :alt="`Foto da unidade ${unit.name}`" class="h-full w-full object-cover" />
                 </div>
-                <StatusBadge :status="appointment.status" />
+                <div>
+                  <h3 class="font-semibold text-ink">{{ unit.name }}</h3>
+                  <p class="mt-1 text-sm leading-6 text-slate-600">{{ unit.address }}</p>
+                </div>
               </div>
-              <p class="mt-3 text-sm text-slate-600">
-                {{ formatDateTime(appointment.schedule?.starts_at) }}
-              </p>
-            </article>
-          </div>
-        </BaseCard>
+              <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-susBlue-dark shadow-sm">
+                {{ unit.distanceLabel }}
+              </span>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-4 text-sm text-slate-600">
+              <p>Tempo estimado: <span class="font-semibold text-slate-900">{{ unit.arrivalLabel }}</span></p>
+              <p>Primeira vaga: <span class="font-semibold text-slate-900">{{ unit.nextSlotLabel }}</span></p>
+            </div>
+          </button>
+        </div>
+
+        <div class="flex justify-end">
+          <BaseButton size="lg" :disabled="!selectedUnit" @click="goToStep('specialty')">
+            Prosseguir
+          </BaseButton>
+        </div>
       </div>
-    </div>
+    </BaseCard>
+
+    <BaseCard v-else-if="step === 'specialty'" title="Escolha o tipo de medico" subtitle="Selecione a especialidade para ver os horarios.">
+      <div class="space-y-5">
+        <div class="rounded-3xl bg-slate-50 p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Unidade escolhida</p>
+          <p class="mt-2 text-lg font-semibold text-ink">{{ selectedUnit?.name || 'Nenhuma unidade selecionada' }}</p>
+          <p class="mt-1 text-sm leading-6 text-slate-600">{{ selectedUnit?.address || 'Volte para escolher uma unidade.' }}</p>
+        </div>
+
+        <div v-if="!specialtyOptions.length" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+          Nenhuma especialidade foi cadastrada pelo administrador ainda.
+        </div>
+        <div v-else class="grid gap-3 sm:grid-cols-2">
+          <button
+            v-for="specialty in specialtyOptions"
+            :key="specialty.id"
+            type="button"
+            class="min-h-24 rounded-3xl border p-4 text-left transition"
+            :class="String(specialty.id) === String(selectedSpecialtyId) ? 'border-susGreen bg-susGreen-soft/70 shadow-card' : 'border-slate-200/80 bg-slate-50/80 hover:border-susGreen/40 hover:bg-white'"
+            @click="handleSelectSpecialty(specialty)"
+          >
+            <p class="text-sm font-semibold text-ink">{{ specialty.name }}</p>
+            <p class="mt-2 text-sm leading-6 text-slate-600">
+              Toque para ver os horarios disponiveis nessa unidade.
+            </p>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between gap-3">
+          <BaseButton variant="ghost" size="lg" @click="goToStep('unit')">Voltar</BaseButton>
+          <BaseButton size="lg" :disabled="!selectedSpecialty" @click="goToStep('schedule')">Prosseguir</BaseButton>
+        </div>
+      </div>
+    </BaseCard>
+
+    <BaseCard v-else-if="step === 'schedule'" title="Escolha data e horario" subtitle="Veja os horarios livres e confirme seu atendimento.">
+      <div class="space-y-5">
+        <div class="rounded-3xl bg-slate-50 p-4">
+          <p class="text-sm font-semibold text-ink">{{ selectedUnit?.name }}</p>
+          <p class="mt-1 text-sm leading-6 text-slate-600">{{ selectedSpecialty?.name || 'Especialidade nao escolhida' }}</p>
+        </div>
+
+        <div v-if="loading.schedules" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+          Buscando horarios disponiveis...
+        </div>
+        <div v-else-if="!displaySchedules.length" class="space-y-4">
+          <div class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+            Nao ha horario disponivel no momento.
+          </div>
+          <BaseButton block variant="ghost" size="lg" :disabled="!selectedUnit || !selectedSpecialty" @click="handleJoinWaitlist">
+            Entrar na fila de espera
+          </BaseButton>
+        </div>
+        <div v-else class="space-y-3">
+          <button
+            v-for="schedule in displaySchedules.slice(0, 8)"
+            :key="schedule.id"
+            type="button"
+            class="w-full rounded-3xl border p-4 text-left transition"
+            :class="String(schedule.id) === String(selectedScheduleId) ? 'border-susBlue bg-susBlue-soft/70 shadow-card' : 'border-slate-200/80 bg-slate-50/80 hover:border-susBlue/40 hover:bg-white'"
+            @click="selectedScheduleId = String(schedule.id)"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="font-semibold text-ink">{{ formatDateTime(schedule.starts_at) }}</h3>
+                <p class="mt-1 text-sm text-slate-600">{{ schedule.doctor?.full_name || 'Profissional da unidade' }}</p>
+              </div>
+              <StatusBadge status="disponivel" />
+            </div>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between gap-3">
+          <BaseButton variant="ghost" size="lg" @click="goToStep('specialty')">Voltar</BaseButton>
+          <BaseButton
+            size="lg"
+            variant="success"
+            :loading="loading.booking"
+            :disabled="!selectedScheduleId || !user"
+            @click="handleCreateOrRescheduleAppointment"
+          >
+            Prosseguir
+          </BaseButton>
+        </div>
+      </div>
+    </BaseCard>
+
+    <BaseCard v-else title="Agendamento concluido" subtitle="Seu horario foi reservado com sucesso.">
+      <div class="flex flex-col items-center justify-center px-4 py-10 text-center">
+        <div class="success-burst">
+          <div class="success-ring">
+            <div class="success-check">
+              <span></span>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="mt-8 font-display text-3xl font-semibold text-ink">Seu agendamento foi concluido com sucesso</h2>
+        <p class="mt-3 max-w-xl text-base leading-7 text-slate-600">
+          {{ successMessage }}
+        </p>
+
+        <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+          <BaseButton size="lg" @click="resetFlow">Voltar para a tela principal</BaseButton>
+          <BaseButton variant="ghost" size="lg" @click="showAppointments = true">
+            Ver meus agendamentos
+          </BaseButton>
+        </div>
+      </div>
+    </BaseCard>
+
+    <BaseCard
+      v-if="showAppointments"
+      title="Meus agendamentos"
+      subtitle="Aqui voce acompanha as consultas ja marcadas."
+    >
+      <div v-if="loading.appointments" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+        Carregando seus agendamentos...
+      </div>
+      <div v-else-if="!myAppointments.length" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+        Nenhuma consulta agendada ainda.
+      </div>
+      <div v-else class="space-y-3">
+        <article
+          v-for="appointment in myAppointments"
+          :key="appointment.id"
+          class="rounded-3xl border border-slate-200/80 bg-slate-50/80 p-4"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="font-semibold text-ink">{{ appointment.schedule?.unit?.name || 'Unidade nao informada' }}</h3>
+              <p class="mt-1 text-sm text-slate-600">{{ appointment.schedule?.specialty?.name || 'Especialidade nao informada' }}</p>
+              <p class="mt-1 text-sm text-slate-600">{{ formatDateTime(appointment.schedule?.starts_at) }}</p>
+            </div>
+            <StatusBadge :status="appointment.status" />
+          </div>
+        </article>
+      </div>
+    </BaseCard>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import LeafletMap from '@/components/maps/LeafletMap.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import { useAuth } from '@/composables/useAuth'
-import { geocodeCep, haversineDistanceInKm } from '@/services/api'
+import { getCurrentLocation, haversineDistanceInKm } from '@/services/api'
 import {
   createAppointment,
   fetchAppointmentsByPatient,
-  fetchAvailableSchedulesByUnit,
+  fetchAvailableSchedulesByUnitAndSpecialty,
+  fetchSpecialties,
   fetchUnits,
 } from '@/services/scheduling'
 import {
-  buildUnitAddress,
-  formatCep,
-  formatDateTime,
-  formatDistance,
-  sanitizeCep,
-} from '@/utils/formatters'
+  addWaitlistEntry,
+  createAppointmentNotifications,
+  estimateArrivalMinutes,
+  formatArrivalLabel,
+  loadWaitlistEntries,
+  pushNotifications,
+} from '@/services/patientExperience'
+import { buildUnitAddress, formatDateTime, formatDistance } from '@/utils/formatters'
 
-const defaultCenter = {
-  lat: -23.55052,
-  lng: -46.633308,
-  zoom: 11,
-}
+const stepItems = [
+  { key: 'unit', label: 'Unidade' },
+  { key: 'specialty', label: 'Tipo de medico' },
+  { key: 'schedule', label: 'Horario' },
+  { key: 'success', label: 'Concluido' },
+]
 
-const { user } = useAuth()
+const { user, profile } = useAuth()
 
-const searchCep = ref('')
+const step = ref('unit')
+const showAppointments = ref(false)
 const searchResult = ref(null)
-const mapCenter = ref(defaultCenter)
 const units = ref([])
-const selectedUnitId = ref(null)
-const unitSchedules = ref([])
+const specialties = ref([])
+const selectedUnitId = ref('')
 const selectedSpecialtyId = ref('')
 const selectedScheduleId = ref('')
+const unitSchedulesById = ref({})
 const myAppointments = ref([])
+const successAppointment = ref(null)
 
 const loading = reactive({
-  initial: true,
-  search: false,
+  units: true,
   schedules: false,
   booking: false,
   appointments: false,
+  location: false,
 })
 
 const feedback = reactive({
@@ -329,76 +299,93 @@ const feedback = reactive({
   message: '',
 })
 
+const specialtyOptions = computed(() => specialties.value)
+const geolocationSupported =
+  typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'geolocation' in navigator
+
+const selectedUnit = computed(
+  () => orderedUnits.value.find((item) => String(item.id) === String(selectedUnitId.value)) ?? null,
+)
+
+const selectedSpecialty = computed(
+  () => specialtyOptions.value.find((item) => String(item.id) === String(selectedSpecialtyId.value)) ?? null,
+)
+
+const displaySchedules = computed(() =>
+  selectedUnit.value ? unitSchedulesById.value[String(selectedUnit.value.id)] ?? [] : [],
+)
+
+const selectedSchedule = computed(
+  () => displaySchedules.value.find((item) => String(item.id) === String(selectedScheduleId.value)) ?? null,
+)
+
+const successMessage = computed(() => {
+  if (!successAppointment.value) {
+    return 'Agora voce pode voltar para o inicio ou acompanhar seus agendamentos.'
+  }
+
+  const unitName = successAppointment.value.schedule?.unit?.name || selectedUnit.value?.name || 'a unidade'
+  const specialtyName =
+    successAppointment.value.schedule?.specialty?.name || selectedSpecialty.value?.name || 'o atendimento'
+  const startsAt =
+    successAppointment.value.schedule?.starts_at || selectedSchedule.value?.starts_at || null
+
+  return `${specialtyName} em ${unitName} no dia ${formatDateTime(startsAt)}.`
+})
+
+const currentStepIndex = computed(() => stepItems.findIndex((item) => item.key === step.value))
+
 const unitsWithDistance = computed(() =>
-  units.value
-    .filter((unit) => Number.isFinite(Number(unit.latitude)) && Number.isFinite(Number(unit.longitude)))
-    .map((unit) => {
-      const distanceKm = searchResult.value?.coordinates
+  units.value.map((unit) => {
+    const hasCoordinates =
+      Number.isFinite(Number(unit.latitude)) && Number.isFinite(Number(unit.longitude))
+
+    const distanceKm =
+      searchResult.value?.coordinates && hasCoordinates
         ? haversineDistanceInKm(searchResult.value.coordinates, {
             lat: Number(unit.latitude),
             lng: Number(unit.longitude),
           })
         : Number.POSITIVE_INFINITY
 
-      return {
-        ...unit,
-        distanceKm,
-        distanceLabel: searchResult.value ? formatDistance(distanceKm) : 'Sem busca',
-      }
-    })
-    .sort((left, right) => left.distanceKm - right.distanceKm),
-)
+    const schedules = unitSchedulesById.value[String(unit.id)] ?? []
+    const nextSlotAt = schedules[0]?.starts_at ?? null
+    const arrivalMinutes = estimateArrivalMinutes(distanceKm)
 
-const nearbyUnits = computed(() => unitsWithDistance.value.slice(0, 8))
-
-const selectedUnit = computed(
-  () => unitsWithDistance.value.find((unit) => String(unit.id) === String(selectedUnitId.value)) ?? null,
-)
-
-const availableSpecialties = computed(() => {
-  const map = new Map()
-
-  unitSchedules.value.forEach((schedule) => {
-    if (schedule.specialty?.id && !map.has(schedule.specialty.id)) {
-      map.set(schedule.specialty.id, schedule.specialty)
+    return {
+      ...unit,
+      address: unit.address_label || buildUnitAddress(unit) || 'Endereco indisponivel',
+      distanceKm,
+      distanceLabel:
+        searchResult.value && Number.isFinite(distanceKm)
+          ? formatDistance(distanceKm)
+          : searchResult.value
+            ? 'Distancia indisponivel'
+            : 'Localizacao pendente',
+      arrivalLabel: arrivalMinutes ? formatArrivalLabel(arrivalMinutes) : 'Tempo indisponivel',
+      nextSlotAt,
+      nextSlotLabel: selectedSpecialty.value
+        ? nextSlotAt
+          ? formatDateTime(nextSlotAt)
+          : 'Sem vaga'
+        : 'Selecione a especialidade',
     }
-  })
-
-  return [...map.values()]
-})
-
-const filteredSchedules = computed(() =>
-  unitSchedules.value.filter((schedule) =>
-    selectedSpecialtyId.value ? String(schedule.specialty_id) === String(selectedSpecialtyId.value) : true,
-  ),
+  }),
 )
 
-const searchHelperText = computed(() =>
-  searchResult.value?.label
-    ? `Mapa centralizado em ${searchResult.value.label}.`
-    : 'Digite um CEP valido para ver no mapa as unidades mais proximas.',
-)
+const orderedUnits = computed(() =>
+  [...unitsWithDistance.value].sort((left, right) => {
+    if (left.distanceKm === right.distanceKm) {
+      return left.name.localeCompare(right.name, 'pt-BR')
+    }
 
-const statCards = computed(() => [
-  {
-    label: 'Unidades encontradas',
-    value: unitsWithDistance.value.length,
-    description: 'Locais que podem aparecer no mapa.',
-  },
-  {
-    label: 'Mais perto de voce',
-    value: nearbyUnits.value.length,
-    description: 'Lista organizada pela distancia do CEP.',
-  },
-  {
-    label: 'Meus pedidos',
-    value: myAppointments.value.length,
-    description: 'Agendamentos registrados nesta conta.',
-  },
-])
+    return left.distanceKm - right.distanceKm
+  }),
+)
 
 onMounted(async () => {
-  await loadUnits()
+  await loadBootstrapData()
+  await tryAutoLocateUser()
 })
 
 watch(
@@ -422,71 +409,133 @@ watch(
   { immediate: true },
 )
 
-function handleSearchCepInput(value) {
-  searchCep.value = formatCep(value)
-}
+watch(
+  selectedSpecialtyId,
+  async (specialtyId) => {
+    selectedScheduleId.value = ''
 
-async function loadUnits() {
-  loading.initial = true
+    if (!specialtyId || !units.value.length) {
+      unitSchedulesById.value = {}
+      return
+    }
+
+    loading.schedules = true
+
+    try {
+      const entries = await Promise.all(
+        units.value.map(async (unit) => {
+          const schedules = await fetchAvailableSchedulesByUnitAndSpecialty(unit.id, specialtyId)
+          return [String(unit.id), schedules]
+        }),
+      )
+
+      unitSchedulesById.value = Object.fromEntries(entries)
+    } catch (error) {
+      unitSchedulesById.value = {}
+      setFeedback('error', mapDataError(error))
+    } finally {
+      loading.schedules = false
+    }
+  },
+  { immediate: true },
+)
+
+async function loadBootstrapData() {
+  loading.units = true
 
   try {
-    units.value = await fetchUnits()
+    const [unitsData, specialtiesData] = await Promise.all([fetchUnits(), fetchSpecialties()])
+    units.value = unitsData
+    specialties.value = specialtiesData
   } catch (error) {
     setFeedback('error', mapDataError(error))
   } finally {
-    loading.initial = false
+    loading.units = false
   }
 }
 
-async function handleSearchCep() {
-  loading.search = true
+async function requestLocation() {
+  if (!geolocationSupported) {
+    setFeedback('error', 'Seu navegador nao permite usar localizacao.')
+    return
+  }
+
+  loading.location = true
   resetFeedback()
 
   try {
-    const result = await geocodeCep(searchCep.value)
-
-    if (!result.coordinates) {
-      throw new Error('Nao foi possivel centralizar o mapa para esse CEP.')
-    }
-
+    const result = await getCurrentLocation()
     searchResult.value = result
-    mapCenter.value = {
-      lat: result.coordinates.lat,
-      lng: result.coordinates.lng,
-      zoom: 13,
+
+    if (orderedUnits.value.length) {
+      handleSelectUnit(orderedUnits.value[0])
     }
 
-    if (nearbyUnits.value.length) {
-      await handleSelectUnit(nearbyUnits.value[0])
+    if (!orderedUnits.value.some((unit) => Number.isFinite(unit.distanceKm))) {
+      setFeedback('error', 'Nenhuma unidade cadastrada possui coordenadas suficientes para ordenar por proximidade.')
     }
   } catch (error) {
     setFeedback('error', mapDataError(error))
   } finally {
-    loading.search = false
+    loading.location = false
   }
 }
 
-async function handleSelectUnit(unit) {
-  selectedUnitId.value = String(unit.id)
-  selectedSpecialtyId.value = ''
-  selectedScheduleId.value = ''
-  loading.schedules = true
+async function tryAutoLocateUser() {
+  if (!geolocationSupported || searchResult.value) {
+    return
+  }
 
   try {
-    unitSchedules.value = await fetchAvailableSchedulesByUnit(unit.id)
+    const permissionState = await getGeolocationPermissionState()
 
-    if (availableSpecialties.value.length) {
-      selectedSpecialtyId.value = String(availableSpecialties.value[0].id)
+    if (permissionState !== 'denied') {
+      await requestLocation()
     }
-  } catch (error) {
-    unitSchedules.value = []
-    setFeedback('error', mapDataError(error))
-  } finally {
-    loading.schedules = false
+  } catch {
+    // Keep the journey usable even if auto-location fails.
   }
 }
 
-async function handleCreateAppointment() {
+async function getGeolocationPermissionState() {
+  if (typeof navigator === 'undefined' || !navigator.permissions?.query) {
+    return 'prompt'
+  }
+
+  try {
+    const result = await navigator.permissions.query({ name: 'geolocation' })
+    return result.state
+  } catch {
+    return 'prompt'
+  }
+}
+
+function handleSelectUnit(unit) {
+  selectedUnitId.value = String(unit.id)
+  selectedScheduleId.value = ''
+  resetFeedback()
+}
+
+function handleSelectSpecialty(specialty) {
+  selectedSpecialtyId.value = String(specialty.id)
+  selectedScheduleId.value = ''
+  resetFeedback()
+}
+
+function goToStep(targetStep) {
+  if (targetStep === 'specialty' && !selectedUnit.value) {
+    return
+  }
+
+  if (targetStep === 'schedule' && (!selectedUnit.value || !selectedSpecialty.value)) {
+    return
+  }
+
+  step.value = targetStep
+  resetFeedback()
+}
+
+async function handleCreateOrRescheduleAppointment() {
   if (!user.value?.id || !selectedScheduleId.value) {
     return
   }
@@ -495,28 +544,71 @@ async function handleCreateAppointment() {
   resetFeedback()
 
   try {
-    await createAppointment({
+    const appointment = await createAppointment({
       patientId: user.value.id,
       scheduleId: Number(selectedScheduleId.value),
     })
 
+    successAppointment.value = appointment
     myAppointments.value = await fetchAppointmentsByPatient(user.value.id)
 
-    if (selectedUnit.value) {
-      unitSchedules.value = await fetchAvailableSchedulesByUnit(selectedUnit.value.id)
+    if (selectedUnit.value && selectedSpecialty.value && selectedSchedule.value) {
+      pushNotifications(
+        createAppointmentNotifications({
+          appointment,
+          patientName: profile.value?.full_name || '',
+          unitName: selectedUnit.value.name,
+          specialtyName: selectedSpecialty.value.name,
+          doctorName: selectedSchedule.value.doctor?.full_name || 'Profissional da unidade',
+        }),
+      )
     }
 
-    selectedScheduleId.value = ''
-    if (availableSpecialties.value.length) {
-      selectedSpecialtyId.value = String(availableSpecialties.value[0].id)
+    if (selectedUnit.value && selectedSpecialtyId.value) {
+      unitSchedulesById.value[String(selectedUnit.value.id)] =
+        await fetchAvailableSchedulesByUnitAndSpecialty(selectedUnit.value.id, selectedSpecialtyId.value)
     }
 
-    setFeedback('success', 'Agendamento confirmado com sucesso. O horario foi reservado.')
+    waitlistCleanup()
+    step.value = 'success'
   } catch (error) {
     setFeedback('error', mapDataError(error))
   } finally {
     loading.booking = false
   }
+}
+
+function handleJoinWaitlist() {
+  if (!selectedSpecialty.value) {
+    return
+  }
+
+  addWaitlistEntry({
+    patientId: user.value?.id ?? null,
+    specialtyId: selectedSpecialty.value.id,
+    specialtyName: selectedSpecialty.value.name,
+    unitId: selectedUnit.value?.id ?? null,
+    unitName: selectedUnit.value?.name || '',
+  })
+
+  setFeedback('success', 'Voce entrou na fila de espera. Vamos avisar quando surgir vaga.')
+}
+
+function resetFlow() {
+  step.value = 'unit'
+  selectedUnitId.value = ''
+  selectedSpecialtyId.value = ''
+  selectedScheduleId.value = ''
+  successAppointment.value = null
+  resetFeedback()
+
+  if (orderedUnits.value.length) {
+    selectedUnitId.value = String(orderedUnits.value[0].id)
+  }
+}
+
+function waitlistCleanup() {
+  loadWaitlistEntries()
 }
 
 function setFeedback(type, message) {
@@ -533,17 +625,17 @@ function mapDataError(error) {
   const message = error?.message ?? ''
 
   if (message.includes('Invalid') || message.includes('duplicate')) {
-    return 'Nao foi possivel reservar esse horario. Tente escolher outro slot.'
+    return 'Nao foi possivel concluir essa acao. Tente outro horario.'
   }
 
-  if (message.includes('Nao foi possivel') || message.includes('Esse horario')) {
+  if (message.includes('localizacao') || message.includes('Geolocalizacao') || message.includes('HTTPS')) {
     return message
   }
 
   if (message.includes('row-level security')) {
-    return 'Seu projeto Supabase precisa das politicas da tabela de agendamentos para permitir esta acao.'
+    return 'Seu projeto Supabase precisa de permissoes liberadas para essa etapa.'
   }
 
-  return 'Nao foi possivel concluir a operacao agora.'
+  return message || 'Nao foi possivel concluir a operacao agora.'
 }
 </script>

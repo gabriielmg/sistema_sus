@@ -35,7 +35,7 @@ const router = createRouter({
       component: AdminView,
       meta: {
         requiresAuth: true,
-        role: 'admin',
+        role: ['admin', 'gestor'],
       },
     },
   ],
@@ -60,7 +60,11 @@ router.beforeEach(async (to) => {
     return to.path === homeRoute ? true : homeRoute
   }
 
-  if (to.meta.role && resolvedRole !== to.meta.role) {
+  if (to.meta.role && Array.isArray(to.meta.role) && !to.meta.role.includes(resolvedRole)) {
+    return to.path === homeRoute ? true : homeRoute
+  }
+
+  if (to.meta.role && !Array.isArray(to.meta.role) && resolvedRole !== to.meta.role) {
     return to.path === homeRoute ? true : homeRoute
   }
 
