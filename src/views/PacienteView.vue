@@ -13,9 +13,6 @@
         </div>
 
         <div class="flex flex-wrap gap-2">
-          <BaseButton variant="ghost" size="sm" :loading="loading.location" @click="requestLocation">
-            Usar minha localizacao
-          </BaseButton>
           <BaseButton variant="secondary" size="sm" @click="showAppointments = !showAppointments">
             {{ showAppointments ? 'Ocultar agendamentos' : 'Ver agendamentos' }}
           </BaseButton>
@@ -47,7 +44,7 @@
       {{ feedback.message }}
     </div>
 
-    <BaseCard v-if="step === 'unit'" title="Encontre a unidade mais proxima" subtitle="Escolha uma unidade para continuar.">
+    <BaseCard v-if="step === 'unit'" title="Escolha uma unidade" subtitle="Selecione a unidade onde deseja ser atendido.">
       <div class="space-y-4">
         <div v-if="loading.units" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
           Buscando unidades...
@@ -56,13 +53,6 @@
           Nenhuma unidade disponivel agora.
         </div>
         <div v-else class="space-y-3">
-          <div class="rounded-3xl border border-susBlue/10 bg-susBlue-soft/40 p-4">
-            <p class="text-sm font-semibold text-susBlue-dark">Sua localizacao</p>
-            <p class="mt-1 text-sm leading-6 text-slate-700">
-              {{ searchResult?.label || 'Toque em "Usar minha localizacao" para organizar a lista pelas unidades mais proximas.' }}
-            </p>
-          </div>
-
           <button
             v-for="unit in orderedUnits.slice(0, 6)"
             :key="unit.id"
@@ -82,12 +72,11 @@
                 </div>
               </div>
               <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-susBlue-dark shadow-sm">
-                {{ unit.distanceLabel }}
+                {{ unit.regionLabel }}
               </span>
             </div>
             <div class="mt-3 flex flex-wrap gap-4 text-sm text-slate-600">
-              <p>Tempo estimado: <span class="font-semibold text-slate-900">{{ unit.arrivalLabel }}</span></p>
-              <p>Primeira vaga: <span class="font-semibold text-slate-900">{{ unit.nextSlotLabel }}</span></p>
+              <p>Atendimento: <span class="font-semibold text-slate-900">{{ unit.nextSlotLabel }}</span></p>
             </div>
           </button>
         </div>
@@ -247,7 +236,6 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import { useAuth } from '@/composables/useAuth'
-import { getCurrentLocation, haversineDistanceInKm } from '@/services/api'
 import {
   createAppointment,
   fetchAppointmentsByPatient,
@@ -258,12 +246,10 @@ import {
 import {
   addWaitlistEntry,
   createAppointmentNotifications,
-  estimateArrivalMinutes,
-  formatArrivalLabel,
   loadWaitlistEntries,
   pushNotifications,
 } from '@/services/patientExperience'
-import { buildUnitAddress, formatDateTime, formatDistance } from '@/utils/formatters'
+import { buildUnitAddress, formatDateTime } from '@/utils/formatters'
 
 const stepItems = [
   { key: 'unit', label: 'Unidade' },
@@ -276,7 +262,6 @@ const { user, profile } = useAuth()
 
 const step = ref('unit')
 const showAppointments = ref(false)
-const searchResult = ref(null)
 const units = ref([])
 const specialties = ref([])
 const selectedUnitId = ref('')
@@ -291,7 +276,6 @@ const loading = reactive({
   schedules: false,
   booking: false,
   appointments: false,
-  location: false,
 })
 
 const feedback = reactive({
@@ -300,8 +284,6 @@ const feedback = reactive({
 })
 
 const specialtyOptions = computed(() => specialties.value)
-const geolocationSupported =
-  typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'geolocation' in navigator
 
 const selectedUnit = computed(
   () => orderedUnits.value.find((item) => String(item.id) === String(selectedUnitId.value)) ?? null,
@@ -335,57 +317,29 @@ const successMessage = computed(() => {
 
 const currentStepIndex = computed(() => stepItems.findIndex((item) => item.key === step.value))
 
-const unitsWithDistance = computed(() =>
-  units.value.map((unit) => {
-    const hasCoordinates =
-      Number.isFinite(Number(unit.latitude)) && Number.isFinite(Number(unit.longitude))
-
-    const distanceKm =
-      searchResult.value?.coordinates && hasCoordinates
-        ? haversineDistanceInKm(searchResult.value.coordinates, {
-            lat: Number(unit.latitude),
-            lng: Number(unit.longitude),
-          })
-        : Number.POSITIVE_INFINITY
-
-    const schedules = unitSchedulesById.value[String(unit.id)] ?? []
-    const nextSlotAt = schedules[0]?.starts_at ?? null
-    const arrivalMinutes = estimateArrivalMinutes(distanceKm)
-
-    return {
-      ...unit,
-      address: unit.address_label || buildUnitAddress(unit) || 'Endereco indisponivel',
-      distanceKm,
-      distanceLabel:
-        searchResult.value && Number.isFinite(distanceKm)
-          ? formatDistance(distanceKm)
-          : searchResult.value
-            ? 'Distancia indisponivel'
-            : 'Localizacao pendente',
-      arrivalLabel: arrivalMinutes ? formatArrivalLabel(arrivalMinutes) : 'Tempo indisponivel',
-      nextSlotAt,
-      nextSlotLabel: selectedSpecialty.value
-        ? nextSlotAt
-          ? formatDateTime(nextSlotAt)
-          : 'Sem vaga'
-        : 'Selecione a especialidade',
-    }
-  }),
-)
-
 const orderedUnits = computed(() =>
-  [...unitsWithDistance.value].sort((left, right) => {
-    if (left.distanceKm === right.distanceKm) {
-      return left.name.localeCompare(right.name, 'pt-BR')
-    }
+  [...units.value]
+    .map((unit) => {
+      const schedules = unitSchedulesById.value[String(unit.id)] ?? []
+      const nextSlotAt = schedules[0]?.starts_at ?? null
 
-    return left.distanceKm - right.distanceKm
-  }),
+      return {
+        ...unit,
+        address: unit.address_label || buildUnitAddress(unit) || 'Endereco indisponivel',
+        regionLabel: [unit.city, unit.state].filter(Boolean).join(' / ') || 'Rede SUS',
+        nextSlotAt,
+        nextSlotLabel: selectedSpecialty.value
+          ? nextSlotAt
+            ? formatDateTime(nextSlotAt)
+            : 'Sem vaga'
+          : 'Selecione a especialidade',
+      }
+    })
+    .sort((left, right) => left.name.localeCompare(right.name, 'pt-BR')),
 )
 
 onMounted(async () => {
   await loadBootstrapData()
-  await tryAutoLocateUser()
 })
 
 watch(
@@ -447,66 +401,14 @@ async function loadBootstrapData() {
     const [unitsData, specialtiesData] = await Promise.all([fetchUnits(), fetchSpecialties()])
     units.value = unitsData
     specialties.value = specialtiesData
+
+    if (!selectedUnitId.value && unitsData.length) {
+      selectedUnitId.value = String(unitsData[0].id)
+    }
   } catch (error) {
     setFeedback('error', mapDataError(error))
   } finally {
     loading.units = false
-  }
-}
-
-async function requestLocation() {
-  if (!geolocationSupported) {
-    setFeedback('error', 'Seu navegador nao permite usar localizacao.')
-    return
-  }
-
-  loading.location = true
-  resetFeedback()
-
-  try {
-    const result = await getCurrentLocation()
-    searchResult.value = result
-
-    if (orderedUnits.value.length) {
-      handleSelectUnit(orderedUnits.value[0])
-    }
-
-    if (!orderedUnits.value.some((unit) => Number.isFinite(unit.distanceKm))) {
-      setFeedback('error', 'Nenhuma unidade cadastrada possui coordenadas suficientes para ordenar por proximidade.')
-    }
-  } catch (error) {
-    setFeedback('error', mapDataError(error))
-  } finally {
-    loading.location = false
-  }
-}
-
-async function tryAutoLocateUser() {
-  if (!geolocationSupported || searchResult.value) {
-    return
-  }
-
-  try {
-    const permissionState = await getGeolocationPermissionState()
-
-    if (permissionState !== 'denied') {
-      await requestLocation()
-    }
-  } catch {
-    // Keep the journey usable even if auto-location fails.
-  }
-}
-
-async function getGeolocationPermissionState() {
-  if (typeof navigator === 'undefined' || !navigator.permissions?.query) {
-    return 'prompt'
-  }
-
-  try {
-    const result = await navigator.permissions.query({ name: 'geolocation' })
-    return result.state
-  } catch {
-    return 'prompt'
   }
 }
 
@@ -626,10 +528,6 @@ function mapDataError(error) {
 
   if (message.includes('Invalid') || message.includes('duplicate')) {
     return 'Nao foi possivel concluir essa acao. Tente outro horario.'
-  }
-
-  if (message.includes('localizacao') || message.includes('Geolocalizacao') || message.includes('HTTPS')) {
-    return message
   }
 
   if (message.includes('row-level security')) {

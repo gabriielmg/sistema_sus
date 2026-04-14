@@ -1,7 +1,6 @@
 import { assertSupabaseConfigured, supabase, TABLES } from '@/services/supabase'
 
-const unitSelect =
-  'id, name, cep, street, residence_number, neighborhood, city, state, address_label, image_url, latitude, longitude, created_at'
+const unitSelect = '*'
 
 const specialtySelect = 'id, name, created_at'
 
@@ -15,14 +14,7 @@ const doctorSelect = `
   is_active,
   created_at,
   updated_at,
-  unit:units!doctors_unit_id_fkey(
-    id,
-    name,
-    city,
-    state,
-    address_label,
-    image_url
-  ),
+  unit:units!doctors_unit_id_fkey(*),
   specialty:specialties!doctors_specialty_id_fkey(
     id,
     name
@@ -37,20 +29,7 @@ const scheduleSelect = `
   is_available,
   status,
   created_at,
-  unit:units!schedules_unit_id_fkey(
-    id,
-    name,
-    cep,
-    street,
-    residence_number,
-    neighborhood,
-    city,
-    state,
-    address_label,
-    image_url,
-    latitude,
-    longitude
-  ),
+  unit:units!schedules_unit_id_fkey(*),
   specialty:specialties!schedules_specialty_id_fkey(
     id,
     name
@@ -78,20 +57,7 @@ const appointmentSelect = `
     starts_at,
     is_available,
     status,
-    unit:units!schedules_unit_id_fkey(
-      id,
-      name,
-      cep,
-      street,
-      residence_number,
-      neighborhood,
-      city,
-      state,
-      address_label,
-      image_url,
-      latitude,
-      longitude
-    ),
+    unit:units!schedules_unit_id_fkey(*),
     specialty:specialties!schedules_specialty_id_fkey(
       id,
       name
@@ -113,11 +79,22 @@ export async function fetchUnits() {
 }
 
 export async function createUnit(payload) {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from(TABLES.units)
     .insert([payload])
     .select(unitSelect)
     .single()
+
+  if (error && hasMissingColumnError(error)) {
+    const retry = await supabase
+      .from(TABLES.units)
+      .insert([buildUnitPayloadWithoutOptionalColumns(payload)])
+      .select(unitSelect)
+      .single()
+
+    data = retry.data
+    error = retry.error
+  }
 
   if (error) {
     throw error
@@ -414,3 +391,25 @@ export async function rescheduleAppointment({ appointmentId, scheduleId }) {
 
   return data
 }
+
+function hasMissingColumnError(error) {
+  return error?.code === 'PGRST204' || error?.code === '42703'
+}
+
+function buildUnitPayloadWithoutOptionalColumns(payload = {}) {
+  const fallbackPayload = {
+    name: payload.name,
+    cep: payload.cep,
+    street: payload.street,
+    neighborhood: payload.neighborhood,
+    city: payload.city,
+    state: payload.state,
+  }
+
+  if (payload.address_label) {
+    fallbackPayload.address_label = payload.address_label
+  }
+
+  return fallbackPayload
+}
+

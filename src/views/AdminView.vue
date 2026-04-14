@@ -138,7 +138,7 @@
         <div v-if="activeSection === 'units'" class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
           <BaseCard
             title="Cadastrar unidade"
-            subtitle="O administrador cadastra a unidade com CEP, foto e coordenadas para a busca por proximidade."
+            subtitle="Cadastre a unidade manualmente com nome, endereco e foto opcional."
           >
             <div v-if="!isAdmin" class="rounded-3xl bg-slate-50 px-4 py-8 text-sm text-slate-600">
               Esta conta nao possui acesso total ao sistema. O cadastro de novas unidades fica disponivel apenas para o administrador.
@@ -263,7 +263,7 @@
 
           <BaseCard
             title="Unidades cadastradas"
-            subtitle="Essas unidades formam a rede do seu sistema e aparecem para o paciente por proximidade."
+            subtitle="Essas unidades formam a rede do seu sistema e aparecem para o paciente escolher no agendamento."
           >
             <div v-if="!visibleUnits.length" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
               Nenhuma unidade cadastrada ainda.
@@ -290,7 +290,7 @@
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <StatusBadge :status="unit.latitude && unit.longitude ? 'disponivel' : 'indisponivel'" />
+                    <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-susBlue-dark shadow-sm">{{ [unit.city, unit.state].filter(Boolean).join(' / ') || 'Rede SUS' }}</span>
                   </div>
                 </div>
               </article>
@@ -634,7 +634,6 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import { useAuth } from '@/composables/useAuth'
-import { buildAddressFromViaCep, fetchAddressByCep, geocodeAddress } from '@/services/api'
 import {
   createDoctor,
   createSchedule,
@@ -697,8 +696,7 @@ const specialties = ref([])
 const doctors = ref([])
 const schedules = ref([])
 const appointments = ref([])
-const cepLookupState = ref('Digite o CEP da unidade para buscar o endereco via ViaCEP.')
-const cepLookupTimer = ref(null)
+const cepLookupState = ref('Preencha o endereco manualmente. O sistema nao consulta mais CEP automaticamente.')
 const unitImageFile = ref(null)
 const unitImagePreview = ref('')
 const { profile } = useAuth()
@@ -814,10 +812,6 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  if (cepLookupTimer.value) {
-    clearTimeout(cepLookupTimer.value)
-  }
-
   if (unitImagePreview.value) {
     URL.revokeObjectURL(unitImagePreview.value)
   }
@@ -855,32 +849,7 @@ async function loadAdminData() {
 
 function handleUnitCepInput(value) {
   unitForm.cep = formatCep(value)
-  cepLookupState.value = 'Digite o CEP da unidade para buscar o endereco via ViaCEP.'
-
-  const normalizedCep = sanitizeCep(value)
-
-  if (cepLookupTimer.value) {
-    clearTimeout(cepLookupTimer.value)
-  }
-
-  if (normalizedCep.length !== 8) {
-    return
-  }
-
-  cepLookupState.value = 'Buscando endereco...'
-
-  cepLookupTimer.value = window.setTimeout(async () => {
-    try {
-      const address = await fetchAddressByCep(normalizedCep)
-      unitForm.street = address.logradouro ?? ''
-      unitForm.neighborhood = address.bairro ?? ''
-      unitForm.city = address.localidade ?? ''
-      unitForm.state = address.uf ?? ''
-      cepLookupState.value = `Endereco localizado: ${buildAddressFromViaCep(address)}.`
-    } catch (error) {
-      cepLookupState.value = mapDataError(error)
-    }
-  }, 450)
+  cepLookupState.value = 'Preencha o endereco manualmente. O sistema nao consulta mais CEP automaticamente.'
 }
 
 function handleUnitImageChange(event) {
@@ -916,12 +885,7 @@ async function handleCreateUnit() {
       .filter(Boolean)
       .join(', ')
 
-    const coordinates = addressLabel ? await geocodeAddress(addressLabel) : null
     const uploadedImage = unitImageFile.value ? await uploadUnitImage(unitImageFile.value) : null
-
-    if (!coordinates?.lat || !coordinates?.lng) {
-      throw new Error('Nao foi possivel obter as coordenadas dessa unidade. Revise o CEP e o endereco antes de salvar.')
-    }
 
     await createUnit({
       name: unitForm.name.trim(),
@@ -933,8 +897,6 @@ async function handleCreateUnit() {
       state: unitForm.state.trim().toUpperCase(),
       address_label: addressLabel,
       image_url: uploadedImage?.publicUrl ?? null,
-      latitude: coordinates.lat,
-      longitude: coordinates.lng,
     })
 
     units.value = await fetchUnits()
@@ -1058,7 +1020,7 @@ function resetUnitForm() {
     URL.revokeObjectURL(unitImagePreview.value)
   }
   unitImagePreview.value = ''
-  cepLookupState.value = 'Digite o CEP da unidade para buscar o endereco via ViaCEP.'
+  cepLookupState.value = 'Preencha o endereco manualmente. O sistema nao consulta mais CEP automaticamente.'
 }
 
 function resetScheduleForm() {
@@ -1095,7 +1057,7 @@ function mapDataError(error) {
     return 'Esse registro ja existe no banco de dados.'
   }
 
-  if (message.includes('coordenadas') || message.includes('imagem') || message.includes('administrador')) {
+  if (message.includes('imagem') || message.includes('administrador')) {
     return message
   }
 
@@ -1106,3 +1068,6 @@ function mapDataError(error) {
   return 'Nao foi possivel concluir a operacao no Supabase.'
 }
 </script>
+
+
+

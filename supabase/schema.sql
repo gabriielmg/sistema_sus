@@ -21,8 +21,6 @@ create table if not exists public.units (
   state text,
   address_label text,
   image_url text,
-  latitude double precision,
-  longitude double precision,
   created_at timestamptz not null default timezone('utc', now())
 );
 
@@ -450,3 +448,4 @@ with check (
   or public.is_admin()
   or public.can_manage_schedule(schedule_id)
 );
+
