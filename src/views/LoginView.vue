@@ -1,60 +1,38 @@
+Aqui está o código atualizado, contendo apenas a parte do formulário centralizada na tela:
+
+```vue
 <template>
-  <div class="mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl items-center gap-5 lg:grid-cols-[1.05fr_minmax(0,460px)] lg:gap-8">
-    <section class="section-panel relative overflow-hidden bg-gradient-to-br from-susBlue via-[#163d8f] to-susGreen p-5 text-white shadow-soft sm:p-6 lg:p-10">
-      <div class="absolute inset-0 opacity-25">
-        <div class="absolute left-4 top-6 h-28 w-28 rounded-full bg-white/20 blur-2xl" />
-        <div class="absolute bottom-8 right-8 h-36 w-36 rounded-full bg-white/15 blur-3xl" />
-      </div>
-
-      <div class="relative z-10 space-y-6">
-        <div class="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-100">
-          Acesso simples
-        </div>
-
-        <div>
-          <h1 class="max-w-xl font-display text-4xl font-semibold leading-tight sm:text-5xl">
-            Entre com CPF e receba um código por SMS para marcar sua consulta.
-          </h1>
-          <p class="mt-4 max-w-xl text-base leading-7 text-slate-100/90">
-            Pensado para celular, com texto claro, botões grandes e uma entrada rápida para quem precisa de atendimento perto de casa.
-          </p>
-        </div>
-
-        <div class="grid gap-3 sm:grid-cols-3">
-          <article class="rounded-3xl border border-white/15 bg-white/10 p-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">1. CPF</p>
-            <p class="mt-2 text-sm leading-6 text-slate-100">Digite seu CPF e confirme o celular cadastrado.</p>
-          </article>
-          <article class="rounded-3xl border border-white/15 bg-white/10 p-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">2. SMS</p>
-            <p class="mt-2 text-sm leading-6 text-slate-100">Receba um código curto no seu telefone.</p>
-          </article>
-          <article class="rounded-3xl border border-white/15 bg-white/10 p-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">3. Consulta</p>
-            <p class="mt-2 text-sm leading-6 text-slate-100">Escolha especialidade, unidade e horário.</p>
-          </article>
-        </div>
-
-        <div class="rounded-3xl border border-white/15 bg-white/10 p-4">
-          <p class="text-sm font-semibold text-white">Acessibilidade ativa</p>
-          <p class="mt-2 text-sm leading-6 text-slate-100">
-            Fonte grande, contraste alto, navegação por etapas e foco no que importa para terminar o agendamento rápido.
-          </p>
-        </div>
-      </div>
-    </section>
-
+  <div class="mx-auto flex min-h-[calc(100vh-2rem)] items-center justify-center p-4">
     <BaseCard class="mx-auto w-full max-w-xl rounded-[28px]">
       <div class="mb-6 flex items-center justify-between gap-3">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.22em] text-susBlue">Paciente</p>
           <h2 class="mt-2 font-display text-3xl font-semibold text-ink">
-            {{ step === 'code' ? 'Digite o código' : 'Entrar com CPF' }}
+            {{ isRegisterMode ? 'Criar conta' : 'Entrar com CPF' }}
           </h2>
         </div>
         <span class="rounded-full bg-susBlue-soft px-3 py-1 text-xs font-semibold text-susBlue-dark">
-          {{ step === 'code' ? 'Etapa 2 de 2' : 'Etapa 1 de 2' }}
+          {{ isRegisterMode ? 'Novo cadastro' : 'Acesso rapido' }}
         </span>
+      </div>
+
+      <div class="mb-6 grid grid-cols-2 gap-2 rounded-3xl bg-slate-100 p-1">
+        <button
+          type="button"
+          class="rounded-2xl px-4 py-3 text-sm font-semibold transition"
+          :class="!isRegisterMode ? 'bg-white text-susBlue shadow-card' : 'text-slate-600 hover:text-slate-800'"
+          @click="switchMode('login')"
+        >
+          Entrar
+        </button>
+        <button
+          type="button"
+          class="rounded-2xl px-4 py-3 text-sm font-semibold transition"
+          :class="isRegisterMode ? 'bg-white text-susBlue shadow-card' : 'text-slate-600 hover:text-slate-800'"
+          @click="switchMode('register')"
+        >
+          Criar conta
+        </button>
       </div>
 
       <div
@@ -67,77 +45,65 @@
         {{ feedback.message }}
       </div>
 
-      <form class="space-y-4" @submit.prevent="step === 'code' ? handleVerifyCode() : handleRequestCode()">
-        <template v-if="step === 'identification'">
-          <div>
-            <label class="label-text" for="cpf">CPF</label>
-            <input
-              id="cpf"
-              v-model.trim="form.cpf"
-              type="text"
-              class="input-field"
-              placeholder="000.000.000-00"
-              inputmode="numeric"
-              autocomplete="off"
-              enterkeyhint="next"
-              required
-            />
-          </div>
+      <form class="space-y-4" @submit.prevent="handleSubmit">
+        <div v-if="isRegisterMode">
+          <label class="label-text" for="full-name">Nome completo</label>
+          <input
+            id="full-name"
+            v-model.trim="form.fullName"
+            type="text"
+            class="input-field"
+            placeholder="Digite seu nome completo"
+            autocomplete="name"
+            enterkeyhint="next"
+            required
+          />
+        </div>
 
-          <div>
-            <label class="label-text" for="phone">Celular para SMS</label>
-            <input
-              id="phone"
-              v-model.trim="form.phone"
-              type="tel"
-              class="input-field"
-              placeholder="(11) 99999-9999"
-              autocomplete="tel"
-              inputmode="tel"
-              enterkeyhint="done"
-              required
-            />
-            <p class="helper-text mt-2">
-              Use o número cadastrado para receber o código de acesso.
-            </p>
-          </div>
-        </template>
+        <div>
+          <label class="label-text" for="cpf">CPF</label>
+          <input
+            id="cpf"
+            v-model="form.cpf"
+            type="text"
+            class="input-field"
+            placeholder="000.000.000-00"
+            inputmode="numeric"
+            autocomplete="username"
+            maxlength="14"
+            enterkeyhint="next"
+            required
+            @input="form.cpf = formatCpf(form.cpf)"
+          />
+        </div>
 
-        <template v-else>
-          <div class="rounded-3xl bg-slate-50 p-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Código enviado para</p>
-            <p class="mt-2 text-lg font-semibold text-ink">{{ maskedPhone }}</p>
-            <p class="mt-2 text-sm leading-6 text-slate-600">
-              Digite o código de 6 números recebido por SMS. Se o celular estiver errado, volte e ajuste.
-            </p>
-          </div>
-
-          <div>
-            <label class="label-text" for="code">Código de verificação</label>
-            <input
-              id="code"
-              v-model.trim="form.code"
-              type="text"
-              class="input-field text-center tracking-[0.35em]"
-              placeholder="000000"
-              inputmode="numeric"
-              maxlength="6"
-              autocomplete="one-time-code"
-              enterkeyhint="done"
-              required
-            />
-          </div>
-        </template>
+        <div>
+          <label class="label-text" for="password">Senha</label>
+          <input
+            id="password"
+            v-model="form.password"
+            type="password"
+            class="input-field"
+            :placeholder="isRegisterMode ? 'Crie uma senha com pelo menos 6 caracteres' : 'Digite sua senha'"
+            autocomplete="current-password"
+            enterkeyhint="done"
+            minlength="6"
+            required
+          />
+          <p v-if="isRegisterMode" class="helper-text mt-2">
+            Cada CPF pode ter somente uma conta cadastrada.
+          </p>
+        </div>
 
         <BaseButton type="submit" block size="lg" :loading="loading" :disabled="!canSubmit">
-          {{ step === 'code' ? 'Entrar no sistema' : 'Receber código por SMS' }}
+          {{ isRegisterMode ? 'Criar minha conta' : 'Entrar no sistema' }}
         </BaseButton>
       </form>
 
       <div class="mt-6 rounded-3xl bg-slate-50 px-4 py-4">
-        <p class="text-sm font-semibold text-slate-800">O que vai acontecer depois</p>
+        <p class="text-sm font-semibold text-slate-800">Depois do acesso</p>
         <p class="mt-2 text-sm leading-6 text-slate-600">
-          Você verá unidades próximas, escolherá a especialidade primeiro e seguirá passo a passo até confirmar a consulta.
+          Voce vera as unidades proximas, podera escolher a especialidade primeiro e seguir ate a confirmacao do agendamento.
         </p>
       </div>
     </BaseCard>
@@ -151,19 +117,18 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import { useAuth } from '@/composables/useAuth'
 import { getHomeRouteByRole } from '@/services/supabase'
-import { formatCpf, formatPhone } from '@/utils/formatters'
+import { formatCpf } from '@/utils/formatters'
 
 const router = useRouter()
-const { sendLoginCode, verifyLoginCode } = useAuth()
+const { signInWithCpf, signUpWithCpf } = useAuth()
 
-const step = ref('identification')
+const mode = ref('login')
 const loading = ref(false)
-const maskedPhone = ref('')
 
 const form = reactive({
+  fullName: '',
   cpf: '',
-  phone: '',
-  code: '',
+  password: '',
 })
 
 const feedback = reactive({
@@ -171,29 +136,38 @@ const feedback = reactive({
   message: '',
 })
 
+const isRegisterMode = computed(() => mode.value === 'register')
+
 const canSubmit = computed(() => {
-  if (step.value === 'code') {
-    return form.code.length >= 4
+  if (isRegisterMode.value) {
+    return Boolean(form.fullName && form.cpf && form.password.length >= 6)
   }
 
-  return Boolean(form.cpf && form.phone)
+  return Boolean(form.cpf && form.password)
 })
 
-async function handleRequestCode() {
+async function handleSubmit() {
   loading.value = true
   resetFeedback()
 
   try {
-    const result = await sendLoginCode({
-      cpf: form.cpf,
-      phone: form.phone,
-    })
+    const result = isRegisterMode.value
+      ? await signUpWithCpf({
+          fullName: form.fullName,
+          cpf: form.cpf,
+          password: form.password,
+        })
+      : await signInWithCpf({
+          cpf: form.cpf,
+          password: form.password,
+        })
 
-    maskedPhone.value = formatPhone(result.phone)
-    form.cpf = formatCpf(form.cpf)
-    step.value = 'code'
     feedback.type = 'success'
-    feedback.message = 'Código enviado. Veja o SMS e digite os 6 números para continuar.'
+    feedback.message = isRegisterMode.value
+      ? 'Conta criada com sucesso. Voce ja pode usar o sistema.'
+      : 'Acesso realizado com sucesso.'
+
+    await router.replace(getHomeRouteByRole(result.profile?.role))
   } catch (error) {
     feedback.type = 'error'
     feedback.message = mapAuthError(error)
@@ -202,23 +176,17 @@ async function handleRequestCode() {
   }
 }
 
-async function handleVerifyCode() {
-  loading.value = true
+function switchMode(nextMode) {
+  if (mode.value === nextMode) {
+    return
+  }
+
+  mode.value = nextMode
   resetFeedback()
+  form.password = ''
 
-  try {
-    const result = await verifyLoginCode({
-      cpf: form.cpf,
-      phone: form.phone,
-      code: form.code,
-    })
-
-    await router.replace(getHomeRouteByRole(result.profile?.role))
-  } catch (error) {
-    feedback.type = 'error'
-    feedback.message = mapAuthError(error)
-  } finally {
-    loading.value = false
+  if (nextMode === 'login') {
+    form.fullName = ''
   }
 }
 
@@ -230,18 +198,34 @@ function resetFeedback() {
 function mapAuthError(error) {
   const message = error?.message ?? ''
 
-  if (message.includes('Invalid token') || message.includes('otp')) {
-    return 'Código inválido. Confira o SMS e tente novamente.'
+  if (message.includes('Invalid login credentials')) {
+    return 'CPF ou senha invalidos.'
   }
 
-  if (message.includes('phone')) {
-    return 'Informe um celular válido para receber o código.'
+  if (message.includes('Ja existe uma conta cadastrada para este CPF')) {
+    return 'Ja existe uma conta cadastrada para este CPF.'
+  }
+
+  if (message.includes('nome completo')) {
+    return message
+  }
+
+  if (message.includes('11 digitos')) {
+    return 'Informe um CPF valido com 11 digitos.'
+  }
+
+  if (message.includes('pelo menos 6 caracteres')) {
+    return 'A senha precisa ter pelo menos 6 caracteres.'
+  }
+
+  if (message.includes('confirmacao de email')) {
+    return 'No Supabase, desative a confirmacao de email para liberar cadastro por CPF e senha.'
   }
 
   if (message.includes('Configure VITE_SUPABASE_URL')) {
     return 'Falta configurar o Supabase no arquivo .env.'
   }
 
-  return 'Nao foi possivel concluir o acesso agora.'
+  return 'Nao foi possivel concluir a autenticacao agora.'
 }
 </script>

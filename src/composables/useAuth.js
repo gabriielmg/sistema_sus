@@ -9,10 +9,12 @@ import {
   normalizeProfile,
   supabase,
 } from '@/services/supabase'
+import { sanitizeCpf } from '@/utils/formatters'
 
 const user = ref(null)
 const profile = ref(null)
 const authReady = ref(false)
+const CPF_AUTH_DOMAIN = 'cpf.local'
 let initialized = false
 
 async function syncProfile(nextUser) {
@@ -109,33 +111,38 @@ export function useAuth() {
     }
   }
 
-  async function signUpWithPassword({ email, password, fullName }) {
+  async function signUpWithPassword({ email, password, fullName, cpf }) {
     assertSupabaseConfigured()
 
+    const normalizedCpf = normalizeRequiredCpf(cpf)
+    const resolvedEmail = email || buildAuthEmailFromCpf(normalizedCpf)
+
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: resolvedEmail,
       password,
       options: {
         data: {
-          full_name: fullName,
+          full_name: String(fullName || '').trim(),
+          cpf: normalizedCpf,
         },
       },
     })
 
     if (error) {
-      throw error
+      throw mapAuthError(error)
     }
 
-    // Quando a confirmacao de email esta habilitada, o usuario ainda nao tem sessao.
-    // Nesse caso o trigger do banco deve criar o profile apos o cadastro, e evitamos
-    // um upsert bloqueado por RLS antes da confirmacao.
+    if (data.user && !data.session) {
+      throw new Error('Desative a confirmacao de email no Supabase para usar cadastro por CPF e senha.')
+    }
+
     if (data.user && data.session?.user) {
       await ensureProfile({
         userId: data.user.id,
-        email: data.user.email,
+        email: data.user.email ?? resolvedEmail,
         fullName,
         role: getRoleFromUser(data.user),
-        cpf: data.user.user_metadata?.cpf ?? '',
+        cpf: normalizedCpf,
         phone: data.user.phone ?? data.user.user_metadata?.phone ?? '',
         unitId: data.user.user_metadata?.unit_id ?? null,
       })
@@ -150,75 +157,40 @@ export function useAuth() {
       user: data.user,
       session: data.session,
       profile: profile.value,
-      requiresEmailConfirmation: Boolean(data.user && !data.session),
+      requiresEmailConfirmation: false,
     }
   }
 
-  async function sendLoginCode({ cpf, phone }) {
-    assertSupabaseConfigured()
+  async function signInWithCpf({ cpf, password }) {
+    const normalizedCpf = normalizeRequiredCpf(cpf)
 
-    const normalizedPhone = normalizePhoneNumber(phone)
-
-    if (!normalizedPhone) {
-      throw new Error('Informe um celular valido para receber o codigo.')
-    }
-
-    const { data, error } = await supabase.auth.signInWithOtp({
-      phone: normalizedPhone,
-      options: {
-        shouldCreateUser: true,
-      },
+    return signInWithPassword({
+      email: buildAuthEmailFromCpf(normalizedCpf),
+      password,
     })
-
-    if (error) {
-      throw error
-    }
-
-    return {
-      phone: normalizedPhone,
-      cpf: String(cpf || '').replace(/\D/g, ''),
-      sent: Boolean(data?.user || data?.session || true),
-    }
   }
 
-  async function verifyLoginCode({ cpf, phone, code, fullName = '' }) {
-    assertSupabaseConfigured()
+  async function signUpWithCpf({ fullName, cpf, password }) {
+    const trimmedFullName = String(fullName || '').trim()
 
-    const normalizedPhone = normalizePhoneNumber(phone)
-
-    if (!normalizedPhone) {
-      throw new Error('Informe um celular valido para continuar.')
+    if (!trimmedFullName) {
+      throw new Error('Informe o nome completo.')
     }
 
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone: normalizedPhone,
-      token: String(code || '').trim(),
-      type: 'sms',
+    if (trimmedFullName.split(/\s+/).length < 2) {
+      throw new Error('Informe o nome completo com nome e sobrenome.')
+    }
+
+    if (String(password || '').length < 6) {
+      throw new Error('A senha precisa ter pelo menos 6 caracteres.')
+    }
+
+    return signUpWithPassword({
+      email: buildAuthEmailFromCpf(cpf),
+      password,
+      fullName: trimmedFullName,
+      cpf,
     })
-
-    if (error) {
-      throw error
-    }
-
-    if (data?.user) {
-      user.value = data.user
-      await ensureProfile({
-        userId: data.user.id,
-        email: data.user.email ?? normalizedPhone,
-        fullName,
-        role: getRoleFromUser(data.user),
-        cpf: String(cpf || '').replace(/\D/g, ''),
-        phone: normalizedPhone,
-        unitId: null,
-      })
-      await syncProfile(data.user)
-    }
-
-    return {
-      user: data.user,
-      session: data.session,
-      profile: profile.value,
-    }
   }
 
   async function logout() {
@@ -242,23 +214,44 @@ export function useAuth() {
     isAdmin: computed(() => role.value === 'admin'),
     signInWithPassword,
     signUpWithPassword,
-    sendLoginCode,
-    verifyLoginCode,
+    signInWithCpf,
+    signUpWithCpf,
     logout,
     refreshProfile: () => syncProfile(user.value),
   }
 }
 
-function normalizePhoneNumber(value = '') {
-  const digits = String(value).replace(/\D/g, '')
+function normalizeRequiredCpf(value = '') {
+  const digits = sanitizeCpf(value)
 
-  if (!digits) {
-    return ''
+  if (digits.length !== 11) {
+    throw new Error('Informe um CPF com 11 digitos.')
   }
 
-  if (digits.startsWith('55')) {
-    return `+${digits}`
+  return digits
+}
+
+function buildAuthEmailFromCpf(value = '') {
+  const digits = sanitizeCpf(value)
+
+  if (digits.length !== 11) {
+    throw new Error('Informe um CPF com 11 digitos.')
   }
 
-  return `+55${digits}`
+  return `${digits}@${CPF_AUTH_DOMAIN}`
+}
+
+function mapAuthError(error) {
+  const message = String(error?.message || '')
+
+  if (
+    message.includes('User already registered') ||
+    message.includes('already been registered') ||
+    message.includes('duplicate key') ||
+    message.includes('profiles_cpf_key')
+  ) {
+    return new Error('Ja existe uma conta cadastrada para este CPF.')
+  }
+
+  return error
 }

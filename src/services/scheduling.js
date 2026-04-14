@@ -1,7 +1,7 @@
 import { assertSupabaseConfigured, supabase, TABLES } from '@/services/supabase'
 
 const unitSelect =
-  'id, name, cep, street, neighborhood, city, state, address_label, image_url, latitude, longitude, created_at'
+  'id, name, cep, street, residence_number, neighborhood, city, state, address_label, image_url, latitude, longitude, created_at'
 
 const specialtySelect = 'id, name, created_at'
 
@@ -42,6 +42,7 @@ const scheduleSelect = `
     name,
     cep,
     street,
+    residence_number,
     neighborhood,
     city,
     state,
@@ -82,6 +83,7 @@ const appointmentSelect = `
       name,
       cep,
       street,
+      residence_number,
       neighborhood,
       city,
       state,

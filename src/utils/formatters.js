@@ -73,8 +73,12 @@ export function formatDistance(km) {
   return `${km.toFixed(1)} km`
 }
 
+export function sanitizeCpf(value = '') {
+  return String(value).replace(/\D/g, '').slice(0, 11)
+}
+
 export function formatCpf(value = '') {
-  const digits = String(value).replace(/\D/g, '').slice(0, 11)
+  const digits = sanitizeCpf(value)
 
   if (digits.length <= 3) return digits
   if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`

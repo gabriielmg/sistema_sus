@@ -294,7 +294,7 @@
             subtitle="Cadastre especialidades para alimentar os horarios e o fluxo de agendamento."
           >
             <div v-if="isManager" class="rounded-3xl bg-slate-50 px-4 py-8 text-sm text-slate-600">
-              Esta conta é de gestor. Especialidades ficam sob controle do administrador.
+              Esta conta Ã© de gestor. Especialidades ficam sob controle do administrador.
             </div>
             <form v-else class="space-y-4" @submit.prevent="handleCreateSpecialty">
               <div>
@@ -341,12 +341,12 @@
           class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]"
         >
           <BaseCard
-            title="Cadastrar médico"
+            title="Cadastrar mÃ©dico"
             subtitle="Vincule o profissional a uma unidade e especialidade."
           >
             <form class="space-y-4" @submit.prevent="handleCreateDoctor">
               <div>
-                <label class="label-text" for="doctor-name">Nome do médico</label>
+                <label class="label-text" for="doctor-name">Nome do mÃ©dico</label>
                 <input
                   id="doctor-name"
                   v-model.trim="doctorForm.fullName"
@@ -400,12 +400,12 @@
               </div>
 
               <div>
-                <label class="label-text" for="doctor-notes">Observações</label>
+                <label class="label-text" for="doctor-notes">ObservaÃ§Ãµes</label>
                 <textarea
                   id="doctor-notes"
                   v-model.trim="doctorForm.notes"
                   class="input-field min-h-28"
-                  placeholder="Ex.: Atende à tarde, faz retorno em 15 dias."
+                  placeholder="Ex.: Atende Ã  tarde, faz retorno em 15 dias."
                 ></textarea>
               </div>
 
@@ -415,17 +415,17 @@
                 :loading="loading.doctor"
                 :disabled="!doctorForm.fullName || !doctorForm.crm || !doctorForm.unitId || !doctorForm.specialtyId"
               >
-                Salvar médico
+                Salvar mÃ©dico
               </BaseButton>
             </form>
           </BaseCard>
 
           <BaseCard
-            title="Médicos cadastrados"
-            subtitle="Veja quem está vinculado a cada unidade."
+            title="MÃ©dicos cadastrados"
+            subtitle="Veja quem estÃ¡ vinculado a cada unidade."
           >
             <div v-if="!visibleDoctors.length" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-              Nenhum médico cadastrado.
+              Nenhum mÃ©dico cadastrado.
             </div>
             <div v-else class="space-y-3">
               <article
@@ -440,7 +440,7 @@
                       {{ doctor.specialty?.name }} - {{ doctor.unit?.name }}
                     </p>
                     <p class="mt-2 text-sm text-slate-500">
-                      {{ doctor.crm }} · {{ doctor.notes || 'Sem observações' }}
+                      {{ doctor.crm }} Â· {{ doctor.notes || 'Sem observaÃ§Ãµes' }}
                     </p>
                   </div>
                   <StatusBadge :status="doctor.is_active ? 'disponivel' : 'indisponivel'" />
@@ -482,9 +482,9 @@
               </div>
 
               <div>
-                <label class="label-text" for="schedule-doctor">Médico</label>
+                <label class="label-text" for="schedule-doctor">MÃ©dico</label>
                 <select id="schedule-doctor" v-model="scheduleForm.doctorId" class="select-field">
-                  <option value="">Opcional: selecione um médico</option>
+                  <option value="">Opcional: selecione um mÃ©dico</option>
                   <option
                     v-for="doctor in doctorsForSelectedUnit"
                     :key="doctor.id"
@@ -660,7 +660,7 @@ const menuItems = [
   },
   {
     key: 'doctors',
-    label: 'Médicos',
+    label: 'MÃ©dicos',
     description: 'Cadastro de profissionais por unidade.',
     short: 'MD',
   },
@@ -694,6 +694,7 @@ const unitForm = reactive({
   name: '',
   cep: '',
   street: '',
+  residenceNumber: '',
   neighborhood: '',
   city: '',
   state: '',
@@ -907,6 +908,7 @@ async function handleCreateUnit() {
       name: unitForm.name.trim(),
       cep: sanitizeCep(unitForm.cep),
       street: unitForm.street.trim(),
+      residence_number: unitForm.residenceNumber.trim(),
       neighborhood: unitForm.neighborhood.trim(),
       city: unitForm.city.trim(),
       state: unitForm.state.trim().toUpperCase(),
@@ -959,7 +961,7 @@ async function handleCreateDoctor() {
 
     doctors.value = await fetchDoctors()
     resetDoctorForm()
-    setFeedback('success', 'Médico salvo com sucesso.')
+    setFeedback('success', 'MÃ©dico salvo com sucesso.')
     activeSection.value = 'doctors'
   } catch (error) {
     setFeedback('error', mapDataError(error))
@@ -983,7 +985,7 @@ async function handleCreateSchedule() {
       scheduleForm.doctorId &&
       !doctorsForSelectedUnit.value.some((doctor) => String(doctor.id) === String(scheduleForm.doctorId))
     ) {
-      throw new Error('Selecione um médico compatível com a unidade e especialidade.')
+      throw new Error('Selecione um mÃ©dico compatÃ­vel com a unidade e especialidade.')
     }
 
     await createSchedule({
@@ -1028,6 +1030,7 @@ function resetUnitForm() {
   unitForm.name = ''
   unitForm.cep = ''
   unitForm.street = ''
+  unitForm.residenceNumber = ''
   unitForm.neighborhood = ''
   unitForm.city = ''
   unitForm.state = ''

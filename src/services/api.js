@@ -1,10 +1,22 @@
-import { sanitizeCep } from '@/utils/formatters'
+﻿import { sanitizeCep } from '@/utils/formatters'
 
 const VIACEP_URL = import.meta.env.DEV ? '/api/viacep' : 'https://viacep.com.br/ws'
 const NOMINATIM_BASE_URL = import.meta.env.DEV ? '/api/nominatim' : 'https://nominatim.openstreetmap.org'
 const NOMINATIM_SEARCH_URL = `${NOMINATIM_BASE_URL}/search`
 const NOMINATIM_REVERSE_URL = `${NOMINATIM_BASE_URL}/reverse`
 const FALLBACK_LOCATION_LABEL = 'Sua localizacao atual'
+const GEOLOCATION_ATTEMPTS = [
+  {
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 120000,
+  },
+  {
+    enableHighAccuracy: false,
+    timeout: 10000,
+    maximumAge: 900000,
+  },
+]
 
 export async function fetchAddressByCep(rawCep) {
   const cep = sanitizeCep(rawCep)
@@ -156,7 +168,7 @@ function toRadians(value) {
   return (value * Math.PI) / 180
 }
 
-function getCurrentCoordinates() {
+async function getCurrentCoordinates() {
   if (typeof window === 'undefined' || typeof navigator === 'undefined' || !navigator.geolocation) {
     throw new Error('Geolocalizacao nao e suportada neste navegador.')
   }
@@ -165,6 +177,24 @@ function getCurrentCoordinates() {
     throw new Error('A localizacao automatica precisa que o sistema esteja em HTTPS ou localhost.')
   }
 
+  let lastError = null
+
+  for (const options of GEOLOCATION_ATTEMPTS) {
+    try {
+      return await requestCoordinates(options)
+    } catch (error) {
+      lastError = error
+
+      if (!isRetryableGeolocationError(error)) {
+        throw error
+      }
+    }
+  }
+
+  throw lastError || new Error('Nao foi possivel obter sua localizacao.')
+}
+
+function requestCoordinates(options) {
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -176,13 +206,13 @@ function getCurrentCoordinates() {
       (error) => {
         reject(mapGeolocationError(error))
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000,
-      },
+      options,
     )
   })
+}
+
+function isRetryableGeolocationError(error) {
+  return error?.geolocationCode === 2 || error?.geolocationCode === 3
 }
 
 function buildLocationLabel(result = {}) {
@@ -199,18 +229,23 @@ function buildLocationLabel(result = {}) {
 
 function mapGeolocationError(error) {
   const code = Number(error?.code)
+  const mappedError = new Error('Nao foi possivel obter sua localizacao.')
+  mappedError.geolocationCode = code
 
   if (code === 1) {
-    return new Error('Permita o acesso a localizacao para encontrar as unidades mais proximas.')
+    mappedError.message = 'Permita o acesso a localizacao para encontrar as unidades mais proximas.'
+    return mappedError
   }
 
   if (code === 2) {
-    return new Error('Nao foi possivel identificar sua localizacao agora.')
+    mappedError.message = 'Nao foi possivel identificar sua localizacao agora. Ative o GPS ou tente novamente em alguns segundos.'
+    return mappedError
   }
 
   if (code === 3) {
-    return new Error('A busca pela sua localizacao demorou mais do que o esperado. Tente novamente.')
+    mappedError.message = 'A localizacao demorou para responder. Tente novamente com o GPS ligado ou use um local com sinal melhor.'
+    return mappedError
   }
 
-  return new Error('Nao foi possivel obter sua localizacao.')
+  return mappedError
 }
