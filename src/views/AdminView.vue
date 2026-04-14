@@ -184,6 +184,19 @@
                   />
                 </div>
                 <div>
+                  <label class="label-text" for="unit-number">Numero</label>
+                  <input
+                    id="unit-number"
+                    v-model.trim="unitForm.residenceNumber"
+                    class="input-field"
+                    type="text"
+                    placeholder="Ex.: 120 ou S/N"
+                  />
+                </div>
+              </div>
+
+              <div class="grid gap-4 md:grid-cols-2">
+                <div>
                   <label class="label-text" for="unit-neighborhood">Bairro</label>
                   <input
                     id="unit-neighborhood"
@@ -294,7 +307,7 @@
             subtitle="Cadastre especialidades para alimentar os horarios e o fluxo de agendamento."
           >
             <div v-if="isManager" class="rounded-3xl bg-slate-50 px-4 py-8 text-sm text-slate-600">
-              Esta conta Ã© de gestor. Especialidades ficam sob controle do administrador.
+              Esta conta ÃƒÆ’Ã‚Â© de gestor. Especialidades ficam sob controle do administrador.
             </div>
             <form v-else class="space-y-4" @submit.prevent="handleCreateSpecialty">
               <div>
@@ -341,12 +354,12 @@
           class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]"
         >
           <BaseCard
-            title="Cadastrar mÃ©dico"
+            title="Cadastrar mÃƒÆ’Ã‚Â©dico"
             subtitle="Vincule o profissional a uma unidade e especialidade."
           >
             <form class="space-y-4" @submit.prevent="handleCreateDoctor">
               <div>
-                <label class="label-text" for="doctor-name">Nome do mÃ©dico</label>
+                <label class="label-text" for="doctor-name">Nome do mÃƒÆ’Ã‚Â©dico</label>
                 <input
                   id="doctor-name"
                   v-model.trim="doctorForm.fullName"
@@ -400,12 +413,12 @@
               </div>
 
               <div>
-                <label class="label-text" for="doctor-notes">ObservaÃ§Ãµes</label>
+                <label class="label-text" for="doctor-notes">ObservaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes</label>
                 <textarea
                   id="doctor-notes"
                   v-model.trim="doctorForm.notes"
                   class="input-field min-h-28"
-                  placeholder="Ex.: Atende Ã  tarde, faz retorno em 15 dias."
+                  placeholder="Ex.: Atende ÃƒÆ’Ã‚Â  tarde, faz retorno em 15 dias."
                 ></textarea>
               </div>
 
@@ -415,17 +428,17 @@
                 :loading="loading.doctor"
                 :disabled="!doctorForm.fullName || !doctorForm.crm || !doctorForm.unitId || !doctorForm.specialtyId"
               >
-                Salvar mÃ©dico
+                Salvar mÃƒÆ’Ã‚Â©dico
               </BaseButton>
             </form>
           </BaseCard>
 
           <BaseCard
-            title="MÃ©dicos cadastrados"
-            subtitle="Veja quem estÃ¡ vinculado a cada unidade."
+            title="MÃƒÆ’Ã‚Â©dicos cadastrados"
+            subtitle="Veja quem estÃƒÆ’Ã‚Â¡ vinculado a cada unidade."
           >
             <div v-if="!visibleDoctors.length" class="rounded-3xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-              Nenhum mÃ©dico cadastrado.
+              Nenhum mÃƒÆ’Ã‚Â©dico cadastrado.
             </div>
             <div v-else class="space-y-3">
               <article
@@ -440,7 +453,7 @@
                       {{ doctor.specialty?.name }} - {{ doctor.unit?.name }}
                     </p>
                     <p class="mt-2 text-sm text-slate-500">
-                      {{ doctor.crm }} Â· {{ doctor.notes || 'Sem observaÃ§Ãµes' }}
+                      {{ doctor.crm }} Ãƒâ€šÃ‚Â· {{ doctor.notes || 'Sem observaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes' }}
                     </p>
                   </div>
                   <StatusBadge :status="doctor.is_active ? 'disponivel' : 'indisponivel'" />
@@ -482,9 +495,9 @@
               </div>
 
               <div>
-                <label class="label-text" for="schedule-doctor">MÃ©dico</label>
+                <label class="label-text" for="schedule-doctor">MÃƒÆ’Ã‚Â©dico</label>
                 <select id="schedule-doctor" v-model="scheduleForm.doctorId" class="select-field">
-                  <option value="">Opcional: selecione um mÃ©dico</option>
+                  <option value="">Opcional: selecione um mÃƒÆ’Ã‚Â©dico</option>
                   <option
                     v-for="doctor in doctorsForSelectedUnit"
                     :key="doctor.id"
@@ -660,7 +673,7 @@ const menuItems = [
   },
   {
     key: 'doctors',
-    label: 'MÃ©dicos',
+    label: 'MÃƒÆ’Ã‚Â©dicos',
     description: 'Cadastro de profissionais por unidade.',
     short: 'MD',
   },
@@ -893,7 +906,13 @@ async function handleCreateUnit() {
       throw new Error('Apenas o administrador pode cadastrar novas unidades.')
     }
 
-    const addressLabel = [unitForm.street, unitForm.neighborhood, unitForm.city, unitForm.state, 'Brasil']
+    const addressLabel = [
+      [unitForm.street, unitForm.residenceNumber].filter(Boolean).join(', '),
+      unitForm.neighborhood,
+      unitForm.city,
+      unitForm.state,
+      'Brasil',
+    ]
       .filter(Boolean)
       .join(', ')
 
@@ -961,7 +980,7 @@ async function handleCreateDoctor() {
 
     doctors.value = await fetchDoctors()
     resetDoctorForm()
-    setFeedback('success', 'MÃ©dico salvo com sucesso.')
+    setFeedback('success', 'MÃƒÆ’Ã‚Â©dico salvo com sucesso.')
     activeSection.value = 'doctors'
   } catch (error) {
     setFeedback('error', mapDataError(error))
@@ -985,7 +1004,7 @@ async function handleCreateSchedule() {
       scheduleForm.doctorId &&
       !doctorsForSelectedUnit.value.some((doctor) => String(doctor.id) === String(scheduleForm.doctorId))
     ) {
-      throw new Error('Selecione um mÃ©dico compatÃ­vel com a unidade e especialidade.')
+      throw new Error('Selecione um mÃƒÆ’Ã‚Â©dico compatÃƒÆ’Ã‚Â­vel com a unidade e especialidade.')
     }
 
     await createSchedule({
