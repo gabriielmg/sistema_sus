@@ -9,6 +9,7 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 export const TABLES = {
   profiles: 'profiles',
   units: 'units',
+  unitHours: 'unit_hours',
   doctors: 'doctors',
   specialties: 'specialties',
   schedules: 'schedules',

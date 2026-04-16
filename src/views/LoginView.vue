@@ -1,34 +1,32 @@
-Aqui está o código atualizado, contendo apenas a parte do formulário centralizada na tela:
-
-```vue
 <template>
-  <div class="mx-auto flex min-h-[calc(100vh-2rem)] items-center justify-center p-4">
-    <BaseCard class="mx-auto w-full max-w-xl rounded-[28px]">
-      <div class="mb-6 flex items-center justify-between gap-3">
+  <div class="mx-auto flex min-h-[calc(100vh-2rem)] items-center justify-center p-4 sm:p-6">
+    <BaseCard class="mx-auto w-full max-w-xl overflow-hidden rounded-[28px] border border-slate-100 bg-white shadow-xl shadow-slate-200/50 sm:p-8">
+      
+      <header class="mb-8 flex items-start justify-between gap-4">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.22em] text-susBlue">Paciente</p>
-          <h2 class="mt-2 font-display text-3xl font-semibold text-ink">
+          <p class="text-xs font-bold uppercase tracking-widest text-susBlue">Paciente</p>
+          <h2 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">
             {{ isRegisterMode ? 'Criar conta' : 'Entrar com CPF' }}
           </h2>
         </div>
-        <span class="rounded-full bg-susBlue-soft px-3 py-1 text-xs font-semibold text-susBlue-dark">
-          {{ isRegisterMode ? 'Novo cadastro' : 'Acesso rapido' }}
+        <span class="inline-flex items-center rounded-full bg-susBlue-soft px-3 py-1 text-xs font-semibold text-susBlue-dark ring-1 ring-inset ring-susBlue/10">
+          {{ isRegisterMode ? 'Novo cadastro' : 'Acesso rápido' }}
         </span>
-      </div>
+      </header>
 
-      <div class="mb-6 grid grid-cols-2 gap-2 rounded-3xl bg-slate-100 p-1">
+      <div class="mb-8 flex rounded-2xl bg-slate-100/80 p-1.5 shadow-inner">
         <button
           type="button"
-          class="rounded-2xl px-4 py-3 text-sm font-semibold transition"
-          :class="!isRegisterMode ? 'bg-white text-susBlue shadow-card' : 'text-slate-600 hover:text-slate-800'"
+          class="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-susBlue/50"
+          :class="!isRegisterMode ? 'bg-white text-susBlue shadow-sm' : 'text-slate-500 hover:bg-slate-200/50 hover:text-slate-700'"
           @click="switchMode('login')"
         >
           Entrar
         </button>
         <button
           type="button"
-          class="rounded-2xl px-4 py-3 text-sm font-semibold transition"
-          :class="isRegisterMode ? 'bg-white text-susBlue shadow-card' : 'text-slate-600 hover:text-slate-800'"
+          class="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-susBlue/50"
+          :class="isRegisterMode ? 'bg-white text-susBlue shadow-sm' : 'text-slate-500 hover:bg-slate-200/50 hover:text-slate-700'"
           @click="switchMode('register')"
         >
           Criar conta
@@ -39,20 +37,28 @@ Aqui está o código atualizado, contendo apenas a parte do formulário centrali
         v-if="feedback.message"
         role="alert"
         aria-live="polite"
-        class="mb-6 rounded-2xl border px-4 py-3 text-sm"
-        :class="feedback.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'"
+        class="mb-8 flex items-start gap-3 rounded-2xl border p-4 text-sm transition-all animate-in fade-in slide-in-from-top-2"
+        :class="feedback.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'"
       >
-        {{ feedback.message }}
+        <svg v-if="feedback.type === 'error'" class="mt-0.5 h-5 w-5 shrink-0 text-rose-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <svg v-else class="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        
+        <p class="font-medium leading-relaxed">{{ feedback.message }}</p>
       </div>
 
-      <form class="space-y-4" @submit.prevent="handleSubmit">
-        <div v-if="isRegisterMode">
-          <label class="label-text" for="full-name">Nome completo</label>
+      <form class="space-y-5" @submit.prevent="handleSubmit">
+        
+        <div v-if="isRegisterMode" class="space-y-1.5 animate-in fade-in zoom-in-95 duration-200">
+          <label class="block text-sm font-medium text-slate-700" for="full-name">Nome completo</label>
           <input
             id="full-name"
             v-model.trim="form.fullName"
             type="text"
-            class="input-field"
+            class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 transition-all hover:border-slate-300 focus:border-susBlue focus:outline-none focus:ring-4 focus:ring-susBlue/10"
             placeholder="Digite seu nome completo"
             autocomplete="name"
             enterkeyhint="next"
@@ -60,13 +66,13 @@ Aqui está o código atualizado, contendo apenas a parte do formulário centrali
           />
         </div>
 
-        <div>
-          <label class="label-text" for="cpf">CPF</label>
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium text-slate-700" for="cpf">CPF</label>
           <input
             id="cpf"
             v-model="form.cpf"
             type="text"
-            class="input-field"
+            class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 transition-all hover:border-slate-300 focus:border-susBlue focus:outline-none focus:ring-4 focus:ring-susBlue/10"
             placeholder="000.000.000-00"
             inputmode="numeric"
             autocomplete="username"
@@ -77,35 +83,51 @@ Aqui está o código atualizado, contendo apenas a parte do formulário centrali
           />
         </div>
 
-        <div>
-          <label class="label-text" for="password">Senha</label>
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium text-slate-700" for="password">Senha</label>
           <input
             id="password"
             v-model="form.password"
             type="password"
-            class="input-field"
-            :placeholder="isRegisterMode ? 'Crie uma senha com pelo menos 6 caracteres' : 'Digite sua senha'"
+            class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 transition-all hover:border-slate-300 focus:border-susBlue focus:outline-none focus:ring-4 focus:ring-susBlue/10"
+            :placeholder="isRegisterMode ? 'Mínimo de 6 caracteres' : 'Digite sua senha secreta'"
             autocomplete="current-password"
             enterkeyhint="done"
             minlength="6"
             required
           />
-          <p v-if="isRegisterMode" class="helper-text mt-2">
+          <p v-if="isRegisterMode" class="mt-2 text-xs text-slate-500">
             Cada CPF pode ter somente uma conta cadastrada.
           </p>
         </div>
 
-        <BaseButton type="submit" block size="lg" :loading="loading" :disabled="!canSubmit">
-          {{ isRegisterMode ? 'Criar minha conta' : 'Entrar no sistema' }}
-        </BaseButton>
+        <div class="pt-2">
+          <BaseButton 
+            type="submit" 
+            block 
+            size="lg" 
+            class="w-full rounded-xl py-3.5 text-base font-bold shadow-lg shadow-susBlue/20 transition-transform active:scale-[0.98]"
+            :loading="loading" 
+            :disabled="!canSubmit"
+          >
+            {{ isRegisterMode ? 'Criar minha conta' : 'Entrar no sistema' }}
+          </BaseButton>
+        </div>
       </form>
 
-      <div class="mt-6 rounded-3xl bg-slate-50 px-4 py-4">
-        <p class="text-sm font-semibold text-slate-800">Depois do acesso</p>
-        <p class="mt-2 text-sm leading-6 text-slate-600">
-          Voce vera as unidades proximas, podera escolher a especialidade primeiro e seguir ate a confirmacao do agendamento.
-        </p>
+      <div class="mt-8 flex gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-5 relative overflow-hidden">
+        <div class="absolute left-0 top-0 h-full w-1.5 bg-susBlue"></div>
+        <svg class="mt-1 h-5 w-5 shrink-0 text-susBlue" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+        </svg>
+        <div>
+          <p class="text-sm font-bold text-slate-800">Depois do acesso</p>
+          <p class="mt-1 text-sm leading-relaxed text-slate-600">
+            Você verá as unidades de saúde próximas, poderá escolher a especialidade e seguir até a confirmação do agendamento.
+          </p>
+        </div>
       </div>
+
     </BaseCard>
   </div>
 </template>
