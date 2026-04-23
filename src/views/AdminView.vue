@@ -1,31 +1,31 @@
 <template>
-  <div class="grid w-full gap-6 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-start xl:gap-8 2xl:grid-cols-[280px_minmax(0,1fr)]">
+  <div class="admin-workspace grid w-full gap-6 xl:grid-cols-[280px_minmax(0,1fr)] xl:items-start xl:gap-8 2xl:grid-cols-[300px_minmax(0,1fr)]">
 
     <AdminSidebar :items="menuItems" :active-key="activeSection" @select="activeSection = $event" />
 
-    <div class="min-w-0 space-y-6 pb-12 sm:space-y-8">
+    <div class="admin-main-stack min-w-0 space-y-6 pb-12 sm:space-y-8">
 
       <!-- ═══════════════════════════════════════════════════════════
            HERO / STAT HEADER
       ════════════════════════════════════════════════════════════ -->
-      <section class="relative overflow-hidden rounded-[28px] border border-slate-200/60 bg-white p-6 shadow-xl shadow-slate-200/30 sm:p-8">
+      <section class="dashboard-hero relative overflow-hidden rounded-[32px] border border-slate-200/60 bg-white p-6 shadow-xl shadow-slate-200/30 sm:p-8">
         <div class="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-susBlue/5 blur-3xl"></div>
 
         <div class="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div class="max-w-3xl">
-            <div class="flex items-center gap-2">
+            <div class="dashboard-hero__eyebrow flex items-center gap-2">
               <span class="flex h-2 w-2 rounded-full bg-susBlue"></span>
               <p class="text-xs font-bold uppercase tracking-widest text-susBlue">Operação central</p>
             </div>
-            <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            <h2 class="dashboard-hero__title mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
               Controle os recursos da rede e acompanhe a fila em tempo real
             </h2>
-            <p class="mt-4 text-base leading-relaxed text-slate-600">
+            <p class="dashboard-hero__description mt-4 text-base leading-relaxed text-slate-600">
               Cadastre unidades, amplie a oferta de especialidades, abra novos horários e trate os agendamentos direto no painel.
             </p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-3 shrink-0">
+          <div class="dashboard-hero__actions flex flex-wrap items-center gap-3 shrink-0">
             <BaseButton variant="ghost" class="rounded-xl border border-slate-200/60 bg-slate-50 hover:bg-slate-100 shadow-sm" @click="activeSection = 'units'">
               Nova unidade
             </BaseButton>
@@ -38,15 +38,15 @@
           </div>
         </div>
 
-        <div class="relative mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div class="metrics-grid relative mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div
             v-for="card in statCards"
             :key="card.label"
-            class="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-slate-50/50 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md hover:shadow-slate-200/40"
+            class="metric-card group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-slate-50/50 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md hover:shadow-slate-200/40"
           >
-            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ card.label }}</p>
-            <h3 class="mt-2 text-4xl font-black text-slate-900">{{ card.value }}</h3>
-            <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ card.description }}</p>
+            <p class="metric-card__label text-xs font-bold uppercase tracking-wider text-slate-500">{{ card.label }}</p>
+            <h3 class="metric-card__value mt-2 text-4xl font-black text-slate-900">{{ card.value }}</h3>
+            <p class="metric-card__description mt-3 text-sm leading-relaxed text-slate-600">{{ card.description }}</p>
           </div>
         </div>
       </section>
@@ -58,7 +58,7 @@
         v-if="feedback.message"
         role="alert"
         aria-live="polite"
-        class="flex items-start gap-3 rounded-2xl border p-4 text-sm transition-all animate-in fade-in slide-in-from-top-2"
+        class="admin-feedback flex items-start gap-3 rounded-2xl border p-4 text-sm transition-all animate-in fade-in slide-in-from-top-2"
         :class="feedback.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'"
       >
         <svg v-if="feedback.type === 'error'" class="mt-0.5 h-5 w-5 shrink-0 text-rose-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -69,7 +69,7 @@
       <!-- ═══════════════════════════════════════════════════════════
            LOADING INICIAL
       ════════════════════════════════════════════════════════════ -->
-      <div v-if="loading.initial" class="flex flex-col items-center justify-center rounded-[28px] border-2 border-dashed border-slate-200 bg-white py-16 px-4 text-center shadow-sm">
+      <div v-if="loading.initial" class="admin-loading flex flex-col items-center justify-center rounded-[28px] border-2 border-dashed border-slate-200 bg-white py-16 px-4 text-center shadow-sm">
         <div class="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-susBlue"></div>
         <h3 class="mt-4 text-lg font-bold text-slate-900">Carregando painel...</h3>
         <p class="mt-2 text-sm font-medium text-slate-500">Buscando dados no Supabase.</p>
@@ -84,11 +84,11 @@
           v-if="activeSection === 'dashboard'"
           title="Resumo operacional"
           subtitle="Visão rápida do que precisa de atenção agora."
-          class="rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20"
+          class="admin-section-card rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20"
         >
           <div class="grid gap-6 xl:grid-cols-2">
 
-            <div class="flex flex-col rounded-[24px] border border-slate-100 bg-slate-50/50 p-6">
+            <div class="dashboard-pane flex flex-col rounded-[24px] border border-slate-100 bg-slate-50/50 p-6">
               <div class="mb-5 flex items-center justify-between">
                 <h3 class="text-lg font-bold text-slate-900">Agendamentos recentes</h3>
                 <BaseButton variant="ghost" size="sm" class="rounded-xl text-susBlue-dark hover:bg-susBlue-soft" @click="activeSection = 'appointments'">
@@ -127,7 +127,7 @@
               </div>
             </div>
 
-            <div class="flex flex-col rounded-[24px] border border-slate-100 bg-slate-50/50 p-6">
+            <div class="dashboard-pane flex flex-col rounded-[24px] border border-slate-100 bg-slate-50/50 p-6">
               <div class="mb-5 flex items-center justify-between">
                 <h3 class="text-lg font-bold text-slate-900">Próximos horários</h3>
                 <BaseButton variant="ghost" size="sm" class="rounded-xl text-susBlue-dark hover:bg-susBlue-soft" @click="activeSection = 'schedules'">
@@ -167,13 +167,13 @@
         <!-- ═══════════════════════════════════════════════════════
              UNIDADES
         ════════════════════════════════════════════════════════ -->
-        <div v-if="activeSection === 'units'" class="grid gap-6 2xl:grid-cols-[minmax(22rem,0.92fr)_minmax(0,1.08fr)]">
+        <div v-if="activeSection === 'units'" class="admin-split-layout grid gap-6 2xl:grid-cols-[minmax(22rem,0.92fr)_minmax(0,1.08fr)]">
 
           <!-- Formulário de cadastro -->
           <BaseCard
             title="Cadastrar unidade"
             subtitle="Preencha os dados abaixo para registrar uma nova unidade de saúde."
-            class="h-fit min-w-0 rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20"
+            class="admin-form-card h-fit min-w-0 rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20"
           >
             <!-- Sem permissão -->
             <div v-if="!isAdmin" class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50 p-6 text-center">
@@ -182,7 +182,7 @@
             </div>
 
             <!-- Formulário -->
-            <form v-else class="space-y-0" @submit.prevent="handleCreateUnit">
+            <form v-else class="admin-form space-y-0" @submit.prevent="handleCreateUnit">
 
               <!-- ── Seção: Informações da unidade ── -->
               <div class="mb-6">
@@ -733,13 +733,13 @@
         <!-- ═══════════════════════════════════════════════════════
              ESPECIALIDADES
         ════════════════════════════════════════════════════════ -->
-        <div v-if="activeSection === 'specialties'" class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+        <div v-if="activeSection === 'specialties'" class="admin-split-layout grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
           <BaseCard title="Nova especialidade" subtitle="Cadastre especialidades para alimentar os horários." class="rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20 h-fit">
             <div v-if="isManager" class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50 p-6 text-center">
               <svg class="h-8 w-8 text-amber-500 mb-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
               <p class="text-sm font-medium text-amber-800">Esta conta é de gestor. Especialidades ficam sob controle do administrador.</p>
             </div>
-            <form v-else class="space-y-5" @submit.prevent="handleCreateSpecialty">
+            <form v-else class="admin-form space-y-5" @submit.prevent="handleCreateSpecialty">
               <div class="space-y-1.5">
                 <label class="block text-sm font-bold text-slate-700" for="specialty-name">Nome da especialidade</label>
                 <input id="specialty-name" v-model.trim="specialtyForm.name" type="text" class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-susGreen focus:bg-white focus:outline-none focus:ring-4 focus:ring-susGreen/10 transition-all" placeholder="Ex.: Clínica Geral, Pediatria" required />
@@ -852,9 +852,9 @@
         <!-- ═══════════════════════════════════════════════════════
              MÉDICOS
         ════════════════════════════════════════════════════════ -->
-        <div v-if="activeSection === 'doctors'" class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+        <div v-if="activeSection === 'doctors'" class="admin-split-layout grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
           <BaseCard title="Cadastrar Médicos" subtitle="Vincule o profissional a uma unidade e especialidade." class="rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20 h-fit">
-            <form class="space-y-5" @submit.prevent="handleCreateDoctor">
+            <form class="admin-form space-y-5" @submit.prevent="handleCreateDoctor">
               <div class="space-y-1.5">
                 <label class="block text-sm font-bold text-slate-700" for="doctor-name">Nome do Médico</label>
                 <input id="doctor-name" v-model.trim="doctorForm.fullName" type="text" class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-susBlue focus:bg-white focus:outline-none focus:ring-4 focus:ring-susBlue/10 transition-all" placeholder="Ex.: Dra. Maria Silva" required />
@@ -932,9 +932,9 @@
         <!-- ═══════════════════════════════════════════════════════
              HORÁRIOS
         ════════════════════════════════════════════════════════ -->
-        <div v-if="activeSection === 'schedules'" class="grid gap-6 xl:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)]">
+        <div v-if="activeSection === 'schedules'" class="admin-split-layout grid gap-6 xl:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)]">
           <BaseCard title="Abrir horário" subtitle="Associe unidade, especialidade e um horario unico ou recorrente para abrir novos slots de agendamento." class="rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20 h-fit">
-            <form class="space-y-5" @submit.prevent="handleCreateSchedule">
+            <form class="admin-form space-y-5" @submit.prevent="handleCreateSchedule">
               <div class="space-y-1.5">
                 <label class="block text-sm font-bold text-slate-700" for="schedule-unit">Unidade de Saúde</label>
                 <select id="schedule-unit" v-model="scheduleForm.unitId" class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-susBlue focus:bg-white focus:outline-none focus:ring-4 focus:ring-susBlue/10 transition-all cursor-pointer" required>
@@ -1124,7 +1124,7 @@
           v-if="activeSection === 'appointments'"
           title="Fila central de agendamentos"
           subtitle="Confirme ou cancele as marcações diretamente pelo painel para gerenciar as vagas."
-          class="rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20"
+          class="admin-section-card rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20"
         >
           <div v-if="!appointments.length" class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-16 px-4 text-center">
             <svg class="h-12 w-12 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75M8.25 21h3.75" /></svg>
@@ -1132,8 +1132,8 @@
             <p class="mt-1 text-sm text-slate-500">Quando os pacientes reservarem horários, eles aparecerão aqui.</p>
           </div>
 
-          <div v-else class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 text-left">
+          <div v-else class="admin-table-shell overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm overflow-x-auto">
+            <table class="admin-data-table min-w-full divide-y divide-slate-200 text-left">
               <thead class="bg-slate-50/80">
                 <tr>
                   <th scope="col" class="px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Paciente</th>

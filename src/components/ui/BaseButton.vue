@@ -3,7 +3,7 @@
     :type="type"
     :disabled="isDisabled"
     :class="[
-      'inline-flex items-center justify-center gap-2 rounded-2xl font-semibold transition duration-200 focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60',
+      'inline-flex items-center justify-center gap-2 rounded-[18px] font-semibold tracking-[-0.01em] transition-all duration-200 focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none',
       sizeClass,
       variantClass,
       block ? 'w-full' : '',
@@ -66,21 +66,21 @@ const props = defineProps({
 
 const variantMap = {
   primary:
-    'bg-susBlue text-white shadow-card hover:bg-susBlue-dark focus:ring-susBlue/20',
+    'bg-gradient-to-r from-susBlue to-[#2b78ef] text-white shadow-card hover:-translate-y-0.5 hover:shadow-elevated focus:ring-susBlue/20',
   success:
-    'bg-susGreen text-white shadow-card hover:bg-susGreen-dark focus:ring-susGreen/20',
+    'bg-gradient-to-r from-susGreen to-[#18b686] text-white shadow-card hover:-translate-y-0.5 hover:shadow-elevated focus:ring-susGreen/20',
   secondary:
-    'bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-300/60 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 dark:focus:ring-slate-600/60',
+    'border border-lineHealth bg-white/80 text-slate-700 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white focus:ring-slate-300/60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 dark:focus:ring-slate-600/60',
   ghost:
-    'border border-slate-200 bg-white/70 text-slate-700 hover:bg-white focus:ring-slate-300/60 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-600/60',
+    'border border-slate-200/90 bg-white/72 text-slate-700 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white focus:ring-slate-300/60 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-600/60',
   danger:
-    'bg-rose-600 text-white shadow-card hover:bg-rose-700 focus:ring-rose-500/20',
+    'bg-gradient-to-r from-rose-600 to-rose-500 text-white shadow-card hover:-translate-y-0.5 hover:shadow-elevated focus:ring-rose-500/20',
 }
 
 const sizeMap = {
   sm: 'min-h-11 px-4 py-2.5 text-sm',
-  md: 'min-h-12 px-4 py-3 text-sm',
-  lg: 'min-h-14 px-5 py-4 text-base',
+  md: 'min-h-[3.125rem] px-4 py-3 text-sm',
+  lg: 'min-h-[3.5rem] px-5 py-4 text-base',
 }
 
 const variantClass = computed(() => variantMap[props.variant] ?? variantMap.primary)

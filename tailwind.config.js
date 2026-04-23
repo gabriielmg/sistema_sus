@@ -9,29 +9,34 @@ export default {
     extend: {
       colors: {
         susBlue: {
-          DEFAULT: '#1d5fd1',
-          dark: '#123d8d',
-          soft: '#eaf2ff',
+          DEFAULT: '#0f62db',
+          dark: '#0a4cae',
+          soft: '#edf5ff',
         },
         susGreen: {
-          DEFAULT: '#0f9b6d',
-          dark: '#0c7351',
-          soft: '#e7f8f1',
+          DEFAULT: '#0f9d73',
+          dark: '#0b7d5b',
+          soft: '#eaf9f3',
         },
-        ink: '#11263c',
-        mist: '#eef5fb',
+        ink: '#0f2137',
+        mist: '#f3f8fc',
+        slateHealth: '#6c8098',
+        lineHealth: '#d9e4f0',
       },
       boxShadow: {
-        soft: '0 30px 60px -28px rgba(17, 38, 60, 0.32)',
-        card: '0 18px 35px -24px rgba(29, 95, 209, 0.45)',
+        soft: '0 32px 70px -38px rgba(15, 33, 55, 0.28)',
+        card: '0 24px 44px -28px rgba(15, 98, 219, 0.36)',
+        elevated: '0 30px 80px -34px rgba(15, 33, 55, 0.32)',
       },
       fontFamily: {
-        sans: ['Manrope', 'ui-sans-serif', 'system-ui'],
-        display: ['Sora', 'Manrope', 'ui-sans-serif'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        display: ['Sora', 'Inter', 'ui-sans-serif'],
       },
       backgroundImage: {
         'hero-grid':
-          'radial-gradient(circle at 1px 1px, rgba(29, 95, 209, 0.12) 1px, transparent 0)',
+          'radial-gradient(circle at 1px 1px, rgba(15, 98, 219, 0.13) 1px, transparent 0)',
+        'hero-wash':
+          'linear-gradient(135deg, rgba(15, 98, 219, 0.12), rgba(15, 157, 115, 0.08))',
       },
     },
   },
