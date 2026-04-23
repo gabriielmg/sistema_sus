@@ -4,10 +4,10 @@
       <slot name="header">
         <div class="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 v-if="title" class="font-display text-xl font-semibold text-ink">
+            <h2 v-if="title" class="font-display text-xl font-semibold text-ink dark:text-slate-50">
               {{ title }}
             </h2>
-            <p v-if="subtitle" class="mt-1 text-sm text-slate-600">
+            <p v-if="subtitle" class="mt-1 text-sm text-slate-600 dark:text-slate-300">
               {{ subtitle }}
             </p>
           </div>

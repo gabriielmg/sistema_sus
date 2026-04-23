@@ -1,9 +1,9 @@
 <template>
-  <div class="mx-auto grid max-w-[1600px] gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-8">
+  <div class="grid w-full gap-6 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-start xl:gap-8 2xl:grid-cols-[280px_minmax(0,1fr)]">
 
     <AdminSidebar :items="menuItems" :active-key="activeSection" @select="activeSection = $event" />
 
-    <div class="space-y-6 pb-12 sm:space-y-8">
+    <div class="min-w-0 space-y-6 pb-12 sm:space-y-8">
 
       <!-- ═══════════════════════════════════════════════════════════
            HERO / STAT HEADER
@@ -167,13 +167,13 @@
         <!-- ═══════════════════════════════════════════════════════
              UNIDADES
         ════════════════════════════════════════════════════════ -->
-        <div v-if="activeSection === 'units'" class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+        <div v-if="activeSection === 'units'" class="grid gap-6 2xl:grid-cols-[minmax(22rem,0.92fr)_minmax(0,1.08fr)]">
 
           <!-- Formulário de cadastro -->
           <BaseCard
             title="Cadastrar unidade"
             subtitle="Preencha os dados abaixo para registrar uma nova unidade de saúde."
-            class="rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20 h-fit"
+            class="h-fit min-w-0 rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20"
           >
             <!-- Sem permissão -->
             <div v-if="!isAdmin" class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50 p-6 text-center">
@@ -392,23 +392,23 @@
           <BaseCard
             title="Unidades cadastradas"
             subtitle="Edite dados, horários de funcionamento e remova unidades quando necessário."
-            class="rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20"
+            class="min-w-0 rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20"
           >
             <div v-if="!visibleUnits.length" class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-12 px-4 text-center">
               <svg class="h-10 w-10 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" /></svg>
               <p class="text-sm font-medium text-slate-500">Nenhuma unidade cadastrada ainda.</p>
             </div>
 
-            <div v-else class="space-y-4">
+            <div v-else class="min-w-0 space-y-4">
               <article
                 v-for="unit in visibleUnits"
                 :key="unit.id"
-                class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                class="group min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
               >
-                <div class="flex flex-col gap-4 p-4">
+                <div class="flex min-w-0 flex-col gap-4 p-4 sm:p-5">
                   <!-- Cabeçalho da unidade -->
-                  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div class="flex items-start gap-4">
+                  <div class="flex min-w-0 flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
+                    <div class="flex min-w-0 flex-1 items-start gap-4">
                       <!-- Foto da unidade -->
                       <div class="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
                         <img
@@ -431,9 +431,9 @@
                       </div>
 
                       <!-- Info da unidade -->
-                      <div class="min-w-0">
-                        <h3 class="font-bold text-slate-900">{{ unit.name }}</h3>
-                        <p class="mt-1 truncate text-sm text-slate-500">
+                      <div class="min-w-0 flex-1">
+                        <h3 class="break-words font-bold text-slate-900">{{ unit.name }}</h3>
+                        <p class="mt-1 break-words text-sm text-slate-500">
                           {{ unit.address_label || buildUnitAddress(unit) || 'Endereço pendente' }}
                         </p>
                         <div class="mt-2 flex flex-wrap items-center gap-2">
@@ -449,7 +449,7 @@
                     </div>
 
                     <!-- Ações -->
-                    <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 lg:border-0 lg:pt-0">
+                    <div class="flex w-full flex-wrap items-center gap-2 border-t border-slate-100 pt-3 2xl:w-auto 2xl:shrink-0 2xl:justify-end 2xl:border-0 2xl:pt-0">
                       <span class="rounded-lg border border-susBlue/10 bg-susBlue-soft/50 px-3 py-1.5 text-xs font-bold text-susBlue-dark">
                         {{ [unit.city, unit.state].filter(Boolean).join(' / ') || 'Rede SUS' }}
                       </span>
@@ -758,17 +758,93 @@
               <p class="text-sm font-medium text-slate-500">Nenhuma especialidade cadastrada.</p>
             </div>
             <div v-else class="grid gap-4 sm:grid-cols-2">
-              <div v-for="specialty in specialties" :key="specialty.id" class="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-susGreen/40">
-                <div class="flex items-center gap-3">
-                  <div class="flex h-10 w-10 items-center justify-center rounded-full bg-susGreen-soft text-susGreen-dark">
+              <article
+                v-for="specialty in specialties"
+                :key="specialty.id"
+                class="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-susGreen/40 hover:shadow-md"
+              >
+                <div class="flex items-start gap-3">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-susGreen-soft text-susGreen-dark">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                   </div>
-                  <div>
-                    <p class="font-bold text-slate-900">{{ specialty.name }}</p>
-                    <p class="text-xs font-medium text-slate-400 mt-0.5">Criada em {{ formatDateTime(specialty.created_at) }}</p>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div class="min-w-0">
+                        <p class="break-words font-bold text-slate-900">{{ specialty.name }}</p>
+                        <p class="mt-0.5 text-xs font-medium text-slate-400">Criada em {{ formatDateTime(specialty.created_at) }}</p>
+                      </div>
+
+                      <div v-if="isAdmin" class="flex flex-wrap gap-2">
+                        <BaseButton
+                          size="sm"
+                          variant="ghost"
+                          class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100"
+                          @click="editingSpecialtyId === specialty.id ? cancelSpecialtyEdit() : startSpecialtyEdit(specialty)"
+                        >
+                          {{ editingSpecialtyId === specialty.id ? 'Fechar edição' : 'Editar' }}
+                        </BaseButton>
+                        <BaseButton
+                          size="sm"
+                          variant="danger"
+                          class="rounded-lg px-3 py-2 text-xs font-bold shadow-sm shadow-rose-500/20"
+                          :loading="deletingSpecialtyId === specialty.id"
+                          :disabled="deletingSpecialtyId === specialty.id"
+                          @click="handleDeleteSpecialty(specialty)"
+                        >
+                          Remover
+                        </BaseButton>
+                      </div>
+                    </div>
+
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                      <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold tracking-wider text-slate-500">
+                        {{ getSpecialtyLinkedDoctorsCount(specialty.id) }} médico(s)
+                      </span>
+                      <span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                        {{ getSpecialtyLinkedSchedulesCount(specialty.id) }} horário(s)
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                <form
+                  v-if="editingSpecialtyId === specialty.id && isAdmin"
+                  class="mt-4 space-y-3 rounded-2xl border border-susGreen/20 bg-slate-50/80 p-4"
+                  @submit.prevent="handleUpdateSpecialty"
+                >
+                  <div class="space-y-1.5">
+                    <label class="block text-sm font-bold text-slate-700" :for="`edit-specialty-${specialty.id}`">Nome da especialidade</label>
+                    <input
+                      :id="`edit-specialty-${specialty.id}`"
+                      v-model.trim="specialtyEditForm.name"
+                      type="text"
+                      class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-susGreen focus:bg-white focus:outline-none focus:ring-4 focus:ring-susGreen/10 transition-all"
+                      placeholder="Ex.: Clínica Geral"
+                      required
+                    />
+                  </div>
+
+                  <div class="flex flex-wrap justify-end gap-2">
+                    <BaseButton
+                      type="button"
+                      variant="ghost"
+                      class="rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                      @click="cancelSpecialtyEdit"
+                    >
+                      Cancelar
+                    </BaseButton>
+                    <BaseButton
+                      type="submit"
+                      variant="success"
+                      class="rounded-xl shadow-lg shadow-susGreen/20"
+                      :loading="savingSpecialtyEdit"
+                      :disabled="!canSubmitSpecialtyEditForm"
+                    >
+                      Salvar alterações
+                    </BaseButton>
+                  </div>
+                </form>
+              </article>
             </div>
           </BaseCard>
         </div>
@@ -857,7 +933,7 @@
              HORÁRIOS
         ════════════════════════════════════════════════════════ -->
         <div v-if="activeSection === 'schedules'" class="grid gap-6 xl:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)]">
-          <BaseCard title="Abrir horário" subtitle="Associe unidade, especialidade e data para abrir um novo slot de agendamento." class="rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20 h-fit">
+          <BaseCard title="Abrir horário" subtitle="Associe unidade, especialidade e um horario unico ou recorrente para abrir novos slots de agendamento." class="rounded-[28px] border-slate-200/60 shadow-xl shadow-slate-200/20 h-fit">
             <form class="space-y-5" @submit.prevent="handleCreateSchedule">
               <div class="space-y-1.5">
                 <label class="block text-sm font-bold text-slate-700" for="schedule-unit">Unidade de Saúde</label>
@@ -880,19 +956,135 @@
                   <option v-for="doctor in doctorsForSelectedUnit" :key="doctor.id" :value="String(doctor.id)">{{ doctor.full_name }}</option>
                 </select>
               </div>
-              <div class="grid gap-5 md:grid-cols-2 border-t border-slate-100 pt-5">
+              <div class="space-y-3 border-t border-slate-100 pt-5">
                 <div class="space-y-1.5">
-                  <label class="block text-sm font-bold text-slate-700" for="schedule-date">Data do atendimento</label>
-                  <input id="schedule-date" v-model="scheduleForm.date" type="date" class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-susBlue focus:bg-white focus:outline-none focus:ring-4 focus:ring-susBlue/10 transition-all" required />
+                  <label class="block text-sm font-bold text-slate-700">Modo de abertura</label>
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      class="rounded-2xl border px-4 py-3 text-left transition-all"
+                      :class="scheduleForm.mode === 'single'
+                        ? 'border-susBlue bg-susBlue-soft/50 text-susBlue-dark shadow-sm'
+                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:bg-white'"
+                      @click="scheduleForm.mode = 'single'"
+                    >
+                      <span class="block text-sm font-bold">Horario unico</span>
+                      <span class="mt-1 block text-xs text-current/80">Cria apenas um slot em uma data e horario especificos.</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-2xl border px-4 py-3 text-left transition-all"
+                      :class="scheduleForm.mode === 'recurring'
+                        ? 'border-susGreen bg-susGreen-soft/60 text-susGreen-dark shadow-sm'
+                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:bg-white'"
+                      @click="scheduleForm.mode = 'recurring'"
+                    >
+                      <span class="block text-sm font-bold">Agenda recorrente</span>
+                      <span class="mt-1 block text-xs text-current/80">Repete os horarios em varios dias da semana dentro de um periodo.</span>
+                    </button>
+                  </div>
                 </div>
-                <div class="space-y-1.5">
-                  <label class="block text-sm font-bold text-slate-700" for="schedule-time">Horário</label>
-                  <input id="schedule-time" v-model="scheduleForm.time" type="time" class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-susBlue focus:bg-white focus:outline-none focus:ring-4 focus:ring-susBlue/10 transition-all" required />
+
+                <div v-if="scheduleForm.mode === 'single'" class="grid gap-5 md:grid-cols-2">
+                  <div class="space-y-1.5">
+                    <label class="block text-sm font-bold text-slate-700" for="schedule-date">Data do atendimento</label>
+                    <input id="schedule-date" v-model="scheduleForm.date" type="date" class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-susBlue focus:bg-white focus:outline-none focus:ring-4 focus:ring-susBlue/10 transition-all" required />
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class="block text-sm font-bold text-slate-700" for="schedule-time">Horario</label>
+                    <input id="schedule-time" v-model="scheduleForm.time" type="time" class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-susBlue focus:bg-white focus:outline-none focus:ring-4 focus:ring-susBlue/10 transition-all" required />
+                  </div>
+                </div>
+
+                <div v-else class="space-y-4 rounded-2xl border border-susGreen/20 bg-slate-50/70 p-4">
+                  <div class="grid gap-4 md:grid-cols-2">
+                    <div class="space-y-1.5">
+                      <label class="block text-sm font-bold text-slate-700" for="schedule-recurrence-start">Inicio do periodo</label>
+                      <input
+                        id="schedule-recurrence-start"
+                        v-model="scheduleForm.recurrenceStartDate"
+                        type="date"
+                        class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-susGreen focus:bg-white focus:outline-none focus:ring-4 focus:ring-susGreen/10 transition-all"
+                        required
+                      />
+                    </div>
+                    <div class="space-y-1.5">
+                      <label class="block text-sm font-bold text-slate-700" for="schedule-recurrence-end">Fim do periodo</label>
+                      <input
+                        id="schedule-recurrence-end"
+                        v-model="scheduleForm.recurrenceEndDate"
+                        type="date"
+                        class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-susGreen focus:bg-white focus:outline-none focus:ring-4 focus:ring-susGreen/10 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <label class="block text-sm font-bold text-slate-700">Dias da semana</label>
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        v-for="option in scheduleWeekdayOptions"
+                        :key="option.value"
+                        type="button"
+                        class="rounded-full border px-4 py-2 text-sm font-bold transition-all"
+                        :class="scheduleForm.weekdays.includes(option.value)
+                          ? 'border-susGreen bg-susGreen text-white shadow-sm shadow-susGreen/20'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'"
+                        @click="toggleScheduleWeekday(option.value)"
+                      >
+                        {{ option.label }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="grid gap-4 md:grid-cols-3">
+                    <div class="space-y-1.5">
+                      <label class="block text-sm font-bold text-slate-700" for="schedule-range-start">Primeiro horario</label>
+                      <input
+                        id="schedule-range-start"
+                        v-model="scheduleForm.rangeStartTime"
+                        type="time"
+                        class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-susGreen focus:bg-white focus:outline-none focus:ring-4 focus:ring-susGreen/10 transition-all"
+                        required
+                      />
+                    </div>
+                    <div class="space-y-1.5">
+                      <label class="block text-sm font-bold text-slate-700" for="schedule-range-end">Ultimo horario</label>
+                      <input
+                        id="schedule-range-end"
+                        v-model="scheduleForm.rangeEndTime"
+                        type="time"
+                        class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-susGreen focus:bg-white focus:outline-none focus:ring-4 focus:ring-susGreen/10 transition-all"
+                        required
+                      />
+                    </div>
+                    <div class="space-y-1.5">
+                      <label class="block text-sm font-bold text-slate-700" for="schedule-interval">Intervalo entre slots</label>
+                      <select
+                        id="schedule-interval"
+                        v-model="scheduleForm.intervalMinutes"
+                        class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-susGreen focus:bg-white focus:outline-none focus:ring-4 focus:ring-susGreen/10 transition-all cursor-pointer"
+                        required
+                      >
+                        <option v-for="option in scheduleIntervalOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <p class="text-xs font-medium text-slate-500">
+                    O horario final informado sera usado como o ultimo slot criado dentro da recorrencia.
+                  </p>
+
+                  <div v-if="recurringSchedulePreview" class="rounded-2xl border border-susGreen/20 bg-white px-4 py-3 text-sm text-slate-600">
+                    <p class="font-semibold text-slate-900">Previa</p>
+                    <p class="mt-1">{{ recurringSchedulePreview }}</p>
+                  </div>
                 </div>
               </div>
               <div class="pt-2">
-                <BaseButton type="submit" block size="lg" class="rounded-xl shadow-lg shadow-susBlue/20" :loading="loading.schedule" :disabled="!scheduleForm.unitId || !scheduleForm.specialtyId || !scheduleForm.date || !scheduleForm.time">
-                  Criar horário disponível
+                <BaseButton type="submit" block size="lg" class="rounded-xl shadow-lg shadow-susBlue/20" :loading="loading.schedule" :disabled="!canSubmitScheduleForm">
+                  {{ scheduleForm.mode === 'recurring' ? 'Criar horarios recorrentes' : 'Criar horario disponivel' }}
                 </BaseButton>
               </div>
             </form>
@@ -999,12 +1191,24 @@
 
       </template>
     </div>
+
+    <BaseAlertDialog
+      v-model="confirmDialog.isOpen"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :tone="confirmDialog.tone"
+      :confirm-label="confirmDialog.confirmLabel"
+      :cancel-label="confirmDialog.cancelLabel"
+      @confirm="handleConfirmDialogConfirm"
+      @cancel="handleConfirmDialogCancel"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import AdminSidebar from '@/components/layout/AdminSidebar.vue'
+import BaseAlertDialog from '@/components/ui/BaseAlertDialog.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
@@ -1014,6 +1218,7 @@ import {
   createSchedule,
   createSpecialty,
   createUnit,
+  deleteSpecialty,
   deleteUnit,
   fetchAppointments,
   fetchDoctors,
@@ -1025,6 +1230,7 @@ import {
   updateUnit,
   updateDoctor,
   updateAppointmentStatus,
+  updateSpecialty,
   updateSchedule,
 } from '@/services/scheduling'
 import {
@@ -1048,6 +1254,22 @@ const menuItems = [
   { key: 'appointments', label: 'Agendamentos', description: 'Fila com status e ações.', short: 'AG' },
 ]
 
+const scheduleWeekdayOptions = [
+  { value: 1, label: 'Seg' },
+  { value: 2, label: 'Ter' },
+  { value: 3, label: 'Qua' },
+  { value: 4, label: 'Qui' },
+  { value: 5, label: 'Sex' },
+  { value: 6, label: 'Sab' },
+  { value: 0, label: 'Dom' },
+]
+
+const scheduleIntervalOptions = [
+  { value: '30', label: 'A cada 30 min' },
+  { value: '60', label: 'A cada 1 hora' },
+  { value: '120', label: 'A cada 2 horas' },
+]
+
 const activeSection = ref('dashboard')
 const units = ref([])
 const specialties = ref([])
@@ -1065,6 +1287,9 @@ const brokenUnitImageIds = ref({})
 const editingUnitId = ref(null)
 const deletingUnitId = ref(null)
 const savingUnitEdit = ref(false)
+const editingSpecialtyId = ref(null)
+const deletingSpecialtyId = ref(null)
+const savingSpecialtyEdit = ref(false)
 const editingUnitCepLookupState = ref(DEFAULT_CEP_LOOKUP_MESSAGE)
 const isEditingUnitAddressAutoFilled = ref(false)
 const isEditingUnitCepLookupLoading = ref(false)
@@ -1097,6 +1322,10 @@ const unitEditForm = reactive({
 })
 
 const specialtyForm = reactive({ name: '' })
+const specialtyEditForm = reactive({
+  id: '',
+  name: '',
+})
 
 const doctorForm = reactive({
   fullName: '',
@@ -1111,8 +1340,15 @@ const scheduleForm = reactive({
   unitId: '',
   specialtyId: '',
   doctorId: '',
+  mode: 'single',
   date: '',
   time: '',
+  recurrenceStartDate: '',
+  recurrenceEndDate: '',
+  weekdays: [],
+  rangeStartTime: '',
+  rangeEndTime: '',
+  intervalMinutes: '60',
 })
 
 const loading = reactive({
@@ -1125,6 +1361,15 @@ const loading = reactive({
 })
 
 const feedback = reactive({ type: '', message: '' })
+const confirmDialog = reactive({
+  isOpen: false,
+  title: '',
+  message: '',
+  tone: 'danger',
+  confirmLabel: 'Confirmar',
+  cancelLabel: 'Cancelar',
+})
+let confirmDialogResolver = null
 
 const upcomingSchedules = computed(() =>
   schedules.value
@@ -1166,6 +1411,271 @@ const doctorsForSelectedUnit = computed(() => {
   })
 })
 
+function toggleScheduleWeekday(weekday) {
+  const normalizedWeekday = Number(weekday)
+  const selectedWeekdays = new Set(scheduleForm.weekdays.map((value) => Number(value)))
+
+  if (selectedWeekdays.has(normalizedWeekday)) {
+    selectedWeekdays.delete(normalizedWeekday)
+  } else {
+    selectedWeekdays.add(normalizedWeekday)
+  }
+
+  scheduleForm.weekdays = scheduleWeekdayOptions
+    .map((option) => option.value)
+    .filter((value) => selectedWeekdays.has(value))
+}
+
+function buildScheduleBasePayload() {
+  const unitId = Number(scheduleForm.unitId)
+  const specialtyId = Number(scheduleForm.specialtyId)
+  const doctorId = scheduleForm.doctorId ? Number(scheduleForm.doctorId) : null
+
+  if (!Number.isInteger(unitId) || !Number.isInteger(specialtyId)) {
+    throw new Error('Selecione a unidade e a especialidade do horario.')
+  }
+
+  if (scheduleForm.doctorId && !Number.isInteger(doctorId)) {
+    throw new Error('Selecione um medico valido para o horario.')
+  }
+
+  return {
+    unit_id: unitId,
+    specialty_id: specialtyId,
+    doctor_id: doctorId,
+  }
+}
+
+function parseLocalDate(dateString) {
+  if (typeof dateString !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return null
+  }
+
+  const [year, month, day] = dateString.split('-').map(Number)
+  const parsedDate = new Date(year, month - 1, day)
+
+  if (
+    parsedDate.getFullYear() !== year ||
+    parsedDate.getMonth() !== month - 1 ||
+    parsedDate.getDate() !== day
+  ) {
+    return null
+  }
+
+  parsedDate.setHours(0, 0, 0, 0)
+  return parsedDate
+}
+
+function formatDateForInput(date) {
+  return [
+    String(date.getFullYear()),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-')
+}
+
+function timeToMinutes(timeString) {
+  if (typeof timeString !== 'string' || !/^\d{2}:\d{2}$/.test(timeString)) {
+    return null
+  }
+
+  const [hours, minutes] = timeString.split(':').map(Number)
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    return null
+  }
+
+  return (hours * 60) + minutes
+}
+
+function formatMinutesToTime(totalMinutes) {
+  if (!Number.isInteger(totalMinutes) || totalMinutes < 0 || totalMinutes > 1439) {
+    return null
+  }
+
+  return `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`
+}
+
+function buildLocalDateTime(dateString, timeString) {
+  const parsedDate = parseLocalDate(dateString)
+  const totalMinutes = timeToMinutes(timeString)
+
+  if (!parsedDate || totalMinutes === null) {
+    return null
+  }
+
+  parsedDate.setHours(Math.floor(totalMinutes / 60), totalMinutes % 60, 0, 0)
+  return parsedDate
+}
+
+function buildSingleSchedulePayload() {
+  const startsAt = buildLocalDateTime(scheduleForm.date, scheduleForm.time)
+
+  if (!startsAt) {
+    throw new Error('Informe uma data e hora validas.')
+  }
+
+  return {
+    ...buildScheduleBasePayload(),
+    starts_at: startsAt.toISOString(),
+  }
+}
+
+function buildRecurringSchedulePayloads() {
+  const startDate = parseLocalDate(scheduleForm.recurrenceStartDate)
+  const endDate = parseLocalDate(scheduleForm.recurrenceEndDate)
+  const rangeStartMinutes = timeToMinutes(scheduleForm.rangeStartTime)
+  const rangeEndMinutes = timeToMinutes(scheduleForm.rangeEndTime)
+  const intervalMinutes = Number(scheduleForm.intervalMinutes)
+  const selectedWeekdays = new Set(scheduleForm.weekdays.map((value) => Number(value)))
+
+  if (!startDate || !endDate) {
+    throw new Error('Informe um periodo valido para os horarios recorrentes.')
+  }
+
+  if (startDate.getTime() > endDate.getTime()) {
+    throw new Error('A data final do periodo deve ser igual ou maior que a data inicial.')
+  }
+
+  if (rangeStartMinutes === null || rangeEndMinutes === null) {
+    throw new Error('Informe horarios validos para a recorrencia.')
+  }
+
+  if (rangeEndMinutes < rangeStartMinutes) {
+    throw new Error('O horario final deve ser maior ou igual ao horario inicial.')
+  }
+
+  if (!Number.isInteger(intervalMinutes) || intervalMinutes <= 0) {
+    throw new Error('Selecione um intervalo valido entre os slots.')
+  }
+
+  if (!selectedWeekdays.size) {
+    throw new Error('Selecione pelo menos um dia da semana para a recorrencia.')
+  }
+
+  const payloads = []
+  const basePayload = buildScheduleBasePayload()
+  const cursor = new Date(startDate)
+
+  while (cursor.getTime() <= endDate.getTime()) {
+    if (selectedWeekdays.has(cursor.getDay())) {
+      const currentDate = formatDateForInput(cursor)
+
+      for (let currentMinutes = rangeStartMinutes; currentMinutes <= rangeEndMinutes; currentMinutes += intervalMinutes) {
+        const timeLabel = formatMinutesToTime(currentMinutes)
+        const startsAt = timeLabel ? buildLocalDateTime(currentDate, timeLabel) : null
+
+        if (!startsAt) {
+          throw new Error('Nao foi possivel gerar um dos horarios informados.')
+        }
+
+        payloads.push({
+          ...basePayload,
+          starts_at: startsAt.toISOString(),
+        })
+
+        if (payloads.length > 500) {
+          throw new Error('Revise o periodo informado para evitar a criacao de horarios em excesso.')
+        }
+      }
+    }
+
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  if (!payloads.length) {
+    throw new Error('Nenhum horario foi gerado com os filtros informados.')
+  }
+
+  return payloads
+}
+
+function isScheduleDuplicateError(error) {
+  const normalizedMessage = [
+    error?.code,
+    error?.message,
+    error?.details,
+    error?.hint,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return (
+    error?.code === '23505' ||
+    normalizedMessage.includes('duplicate') ||
+    normalizedMessage.includes('unique') ||
+    normalizedMessage.includes('already exists')
+  )
+}
+
+async function createSchedulesFromPayloads(payloads) {
+  let created = 0
+  let skipped = 0
+
+  for (const payload of payloads) {
+    try {
+      await createSchedule(payload)
+      created += 1
+    } catch (error) {
+      if (isScheduleDuplicateError(error)) {
+        skipped += 1
+        continue
+      }
+
+      throw error
+    }
+  }
+
+  return { created, skipped }
+}
+
+const canSubmitScheduleForm = computed(() => {
+  if (!scheduleForm.unitId || !scheduleForm.specialtyId) {
+    return false
+  }
+
+  if (scheduleForm.mode === 'single') {
+    return !!scheduleForm.date && !!scheduleForm.time
+  }
+
+  return (
+    !!scheduleForm.recurrenceStartDate &&
+    !!scheduleForm.recurrenceEndDate &&
+    scheduleForm.weekdays.length > 0 &&
+    !!scheduleForm.rangeStartTime &&
+    !!scheduleForm.rangeEndTime &&
+    !!scheduleForm.intervalMinutes
+  )
+})
+
+const recurringSchedulePreview = computed(() => {
+  if (scheduleForm.mode !== 'recurring') {
+    return ''
+  }
+
+  if (
+    !scheduleForm.recurrenceStartDate ||
+    !scheduleForm.recurrenceEndDate ||
+    !scheduleForm.weekdays.length ||
+    !scheduleForm.rangeStartTime ||
+    !scheduleForm.rangeEndTime
+  ) {
+    return ''
+  }
+
+  try {
+    const payloads = buildRecurringSchedulePayloads()
+    const weekdayLabels = scheduleWeekdayOptions
+      .filter((option) => scheduleForm.weekdays.includes(option.value))
+      .map((option) => option.label)
+      .join(', ')
+
+    return `${payloads.length} horario(s) serao criados para ${weekdayLabels}, das ${scheduleForm.rangeStartTime} as ${scheduleForm.rangeEndTime}.`
+  } catch {
+    return ''
+  }
+})
+
 const cepLookupMessage = computed(() => cepLookupState.value)
 const canSubmitUnitForm = computed(() => {
   return (
@@ -1190,6 +1700,9 @@ const canSubmitUnitEditForm = computed(() => {
     !isEditingUnitCepLookupLoading.value
   )
 })
+const canSubmitSpecialtyEditForm = computed(() => {
+  return !!specialtyEditForm.id && !!specialtyEditForm.name.trim()
+})
 
 onMounted(async () => { await loadAdminData() })
 
@@ -1197,6 +1710,7 @@ onBeforeUnmount(() => {
   cancelCepLookup()
   cancelEditingCepLookup()
   if (unitImagePreview.value) { URL.revokeObjectURL(unitImagePreview.value) }
+  resolveConfirmDialog(false)
 })
 
 async function loadAdminData() {
@@ -1220,6 +1734,99 @@ async function loadAdminData() {
   } finally {
     loading.initial = false
   }
+}
+
+async function reloadSpecialtyDependentData() {
+  const [specialtiesData, doctorsData, schedulesData, appointmentsData] = await Promise.all([
+    fetchSpecialties(),
+    fetchDoctors(),
+    fetchSchedules(),
+    fetchAppointments(),
+  ])
+
+  specialties.value = specialtiesData
+  doctors.value = doctorsData ?? []
+  schedules.value = schedulesData
+  appointments.value = appointmentsData
+}
+
+function startSpecialtyEdit(specialty) {
+  if (!isAdmin.value || !specialty?.id) return
+  editingSpecialtyId.value = specialty.id
+  specialtyEditForm.id = String(specialty.id)
+  specialtyEditForm.name = specialty.name ?? ''
+}
+
+function cancelSpecialtyEdit() {
+  editingSpecialtyId.value = null
+  specialtyEditForm.id = ''
+  specialtyEditForm.name = ''
+}
+
+function getSpecialtyLinkedDoctorsCount(specialtyId) {
+  return doctors.value.filter((doctor) => String(doctor.specialty_id) === String(specialtyId)).length
+}
+
+function getSpecialtyLinkedSchedulesCount(specialtyId) {
+  return schedules.value.filter((schedule) => String(schedule.specialty_id) === String(specialtyId)).length
+}
+
+function clearDeletedSpecialtySelections(specialtyId) {
+  if (String(doctorForm.specialtyId) === String(specialtyId)) {
+    doctorForm.specialtyId = ''
+  }
+
+  if (String(scheduleForm.specialtyId) === String(specialtyId)) {
+    scheduleForm.specialtyId = ''
+    scheduleForm.doctorId = ''
+  }
+}
+
+function openConfirmDialog({
+  title = 'Confirmar acao',
+  message = '',
+  tone = 'danger',
+  confirmLabel = 'Confirmar',
+  cancelLabel = 'Cancelar',
+} = {}) {
+  resolveConfirmDialog(false)
+
+  confirmDialog.isOpen = true
+  confirmDialog.title = title
+  confirmDialog.message = message
+  confirmDialog.tone = tone
+  confirmDialog.confirmLabel = confirmLabel
+  confirmDialog.cancelLabel = cancelLabel
+
+  return new Promise((resolve) => {
+    confirmDialogResolver = resolve
+  })
+}
+
+function resetConfirmDialog() {
+  confirmDialog.isOpen = false
+  confirmDialog.title = ''
+  confirmDialog.message = ''
+  confirmDialog.tone = 'danger'
+  confirmDialog.confirmLabel = 'Confirmar'
+  confirmDialog.cancelLabel = 'Cancelar'
+}
+
+function resolveConfirmDialog(result) {
+  if (confirmDialogResolver) {
+    confirmDialogResolver(result)
+    confirmDialogResolver = null
+  }
+
+  resetConfirmDialog()
+}
+
+function handleConfirmDialogConfirm() {
+  resolveConfirmDialog(true)
+}
+
+function handleConfirmDialogCancel() {
+  resolveConfirmDialog(false)
 }
 
 async function handleUnitCepInput(value) {
@@ -1521,7 +2128,12 @@ async function handleUpdateUnit() {
 
 async function handleDeleteUnit(unit) {
   if (!isAdmin.value || !unit?.id) return
-  const confirmed = window.confirm(`Deseja remover a unidade "${unit.name}"? Horários, profissionais e agendamentos ligados a ela também serão afetados.`)
+  const confirmed = await openConfirmDialog({
+    title: 'Remover unidade',
+    message: `Deseja remover a unidade "${unit.name}"? Horarios, profissionais e agendamentos ligados a ela tambem serao afetados.`,
+    tone: 'danger',
+    confirmLabel: 'Remover unidade',
+  })
   if (!confirmed) return
   deletingUnitId.value = unit.id
   resetFeedback()
@@ -1542,13 +2154,72 @@ async function handleCreateSpecialty() {
   resetFeedback()
   try {
     await createSpecialty(specialtyForm.name.trim())
-    specialties.value = await fetchSpecialties()
+    await reloadSpecialtyDependentData()
     specialtyForm.name = ''
     setFeedback('success', 'Especialidade salva com sucesso.')
   } catch (error) {
     setFeedback('error', mapDataError(error))
   } finally {
     loading.specialty = false
+  }
+}
+
+async function handleUpdateSpecialty() {
+  savingSpecialtyEdit.value = true
+  resetFeedback()
+  try {
+    if (!isAdmin.value) throw new Error('Apenas o administrador pode editar especialidades.')
+    if (!canSubmitSpecialtyEditForm.value) throw new Error('Informe o nome da especialidade antes de salvar.')
+
+    await updateSpecialty(Number(specialtyEditForm.id), specialtyEditForm.name.trim())
+    await reloadSpecialtyDependentData()
+    cancelSpecialtyEdit()
+    setFeedback('success', 'Especialidade atualizada com sucesso.')
+  } catch (error) {
+    setFeedback('error', mapDataError(error))
+  } finally {
+    savingSpecialtyEdit.value = false
+  }
+}
+
+async function handleDeleteSpecialty(specialty) {
+  if (!isAdmin.value || !specialty?.id) return
+
+  const linkedDoctors = getSpecialtyLinkedDoctorsCount(specialty.id)
+  if (linkedDoctors > 0) {
+    setFeedback(
+      'error',
+      `Nao foi possivel remover "${specialty.name}" porque ela ainda esta vinculada a ${linkedDoctors} medico(s). Reatribua ou remova esses cadastros primeiro.`,
+    )
+    return
+  }
+
+  const linkedSchedules = getSpecialtyLinkedSchedulesCount(specialty.id)
+  const warning = linkedSchedules > 0
+    ? ` Isso tambem removera ${linkedSchedules} horario(s) e os agendamentos vinculados a eles.`
+    : ''
+  const confirmed = await openConfirmDialog({
+    title: 'Remover especialidade',
+    message: `Deseja remover a especialidade "${specialty.name}"?${warning}`,
+    tone: 'danger',
+    confirmLabel: 'Remover especialidade',
+  })
+  if (!confirmed) return
+
+  deletingSpecialtyId.value = specialty.id
+  resetFeedback()
+  try {
+    await deleteSpecialty(specialty.id)
+    if (String(editingSpecialtyId.value) === String(specialty.id)) {
+      cancelSpecialtyEdit()
+    }
+    clearDeletedSpecialtySelections(specialty.id)
+    await reloadSpecialtyDependentData()
+    setFeedback('success', 'Especialidade removida com sucesso.')
+  } catch (error) {
+    setFeedback('error', mapDataError(error))
+  } finally {
+    deletingSpecialtyId.value = null
   }
 }
 
@@ -1579,20 +2250,31 @@ async function handleCreateSchedule() {
   loading.schedule = true
   resetFeedback()
   try {
-    const startsAt = new Date(`${scheduleForm.date}T${scheduleForm.time}:00`)
-    if (Number.isNaN(startsAt.getTime())) throw new Error('Informe uma data e hora válidas.')
+    const scheduleMode = scheduleForm.mode
+
     if (scheduleForm.doctorId && !doctorsForSelectedUnit.value.some((doctor) => String(doctor.id) === String(scheduleForm.doctorId))) {
-      throw new Error('Selecione um Médico compatível com a unidade e especialidade.')
+      throw new Error('Selecione um medico compativel com a unidade e especialidade.')
     }
-    await createSchedule({
-      unit_id: Number(scheduleForm.unitId),
-      specialty_id: Number(scheduleForm.specialtyId),
-      doctor_id: scheduleForm.doctorId ? Number(scheduleForm.doctorId) : null,
-      starts_at: startsAt.toISOString(),
-    })
+
+    const payloads = scheduleMode === 'recurring'
+      ? buildRecurringSchedulePayloads()
+      : [buildSingleSchedulePayload()]
+
+    const { created, skipped } = await createSchedulesFromPayloads(payloads)
+
+    if (!created && skipped) {
+      throw new Error('Todos os horarios gerados ja existem para essa unidade e especialidade.')
+    }
+
     schedules.value = await fetchSchedules()
     resetScheduleForm()
-    setFeedback('success', 'Horário criado com sucesso.')
+
+    if (scheduleMode === 'recurring') {
+      const skippedMessage = skipped ? ` ${skipped} horario(s) ja existiam e foram ignorados.` : ''
+      setFeedback('success', `${created} horario(s) criado(s) com sucesso.${skippedMessage}`)
+    } else {
+      setFeedback('success', 'Horario criado com sucesso.')
+    }
   } catch (error) {
     setFeedback('error', mapDataError(error))
   } finally {
@@ -1628,11 +2310,18 @@ function resetUnitForm() {
 }
 
 function resetScheduleForm() {
-  scheduleForm.unitId = ''
+  scheduleForm.unitId = isManager.value && managedUnitId.value ? String(managedUnitId.value) : ''
   scheduleForm.specialtyId = ''
   scheduleForm.doctorId = ''
+  scheduleForm.mode = 'single'
   scheduleForm.date = ''
   scheduleForm.time = ''
+  scheduleForm.recurrenceStartDate = ''
+  scheduleForm.recurrenceEndDate = ''
+  scheduleForm.weekdays = []
+  scheduleForm.rangeStartTime = ''
+  scheduleForm.rangeEndTime = ''
+  scheduleForm.intervalMinutes = '60'
 }
 
 function resetDoctorForm() {
@@ -1670,12 +2359,34 @@ function mapDataError(error) {
   if (
     normalizedMessage.includes('administrador') ||
     normalizedMessage.includes('preencha o cep') ||
+    normalizedMessage.includes('informe o nome da especialidade') ||
+    normalizedMessage.includes('informe uma data e hora validas') ||
+    normalizedMessage.includes('selecione um medico compativel') ||
+    normalizedMessage.includes('selecione um medico valido') ||
+    normalizedMessage.includes('selecione a unidade e a especialidade do horario') ||
+    normalizedMessage.includes('informe um periodo valido') ||
+    normalizedMessage.includes('data final do periodo') ||
+    normalizedMessage.includes('horarios validos para a recorrencia') ||
+    normalizedMessage.includes('horario final deve ser maior') ||
+    normalizedMessage.includes('intervalo valido entre os slots') ||
+    normalizedMessage.includes('dia da semana para a recorrencia') ||
+    normalizedMessage.includes('nao foi possivel gerar um dos horarios') ||
+    normalizedMessage.includes('criacao de horarios em excesso') ||
+    normalizedMessage.includes('nenhum horario foi gerado') ||
+    normalizedMessage.includes('todos os horarios gerados ja existem') ||
     normalizedMessage.includes('revise o horario') ||
     normalizedMessage.includes('revise o hor?rio') ||
     normalizedMessage.includes('alteracoes') ||
     normalizedMessage.includes('altera??es')
   ) {
     return message
+  }
+
+  if (
+    normalizedMessage.includes('foreign key constraint') ||
+    normalizedMessage.includes('violates foreign key constraint')
+  ) {
+    return 'Existem registros vinculados a este item. Remova ou ajuste esses vinculos antes de excluir.'
   }
 
   if (

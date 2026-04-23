@@ -104,25 +104,14 @@ export async function createUnit(payload) {
   let { data, error } = await supabase
     .from(TABLES.units)
     .insert([payload])
-    .select(unitSelect)
+    .select('id')
     .single()
-
-  if (error && hasMissingUnitHoursRelationError(error)) {
-    const retry = await supabase
-      .from(TABLES.units)
-      .insert([payload])
-      .select('*')
-      .single()
-
-    data = retry.data
-    error = retry.error
-  }
 
   if (error && hasMissingColumnError(error)) {
     const retry = await supabase
       .from(TABLES.units)
       .insert([buildUnitPayloadWithoutOptionalColumns(payload)])
-      .select(unitSelect)
+      .select('id')
       .single()
 
     data = retry.data
@@ -133,7 +122,7 @@ export async function createUnit(payload) {
     throw error
   }
 
-  return data
+  return fetchUnitById(data?.id)
 }
 
 export async function updateUnit(unitId, payload) {
@@ -285,6 +274,32 @@ export async function createSpecialty(name) {
   }
 
   return data
+}
+
+export async function updateSpecialty(specialtyId, name) {
+  const { data, error } = await supabase
+    .from(TABLES.specialties)
+    .update({ name })
+    .eq('id', specialtyId)
+    .select(specialtySelect)
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  return data
+}
+
+export async function deleteSpecialty(specialtyId) {
+  const { error } = await supabase
+    .from(TABLES.specialties)
+    .delete()
+    .eq('id', specialtyId)
+
+  if (error) {
+    throw error
+  }
 }
 
 export async function fetchDoctors() {
@@ -528,6 +543,35 @@ function normalizeUnits(units = []) {
     ...unit,
     operating_hours: normalizeOperatingHours(unit?.operating_hours),
   }))
+}
+
+async function fetchUnitById(unitId) {
+  if (!unitId) {
+    return null
+  }
+
+  let { data, error } = await supabase
+    .from(TABLES.units)
+    .select(unitSelect)
+    .eq('id', unitId)
+    .single()
+
+  if (error && hasMissingUnitHoursRelationError(error)) {
+    const retry = await supabase
+      .from(TABLES.units)
+      .select('*')
+      .eq('id', unitId)
+      .single()
+
+    data = retry.data
+    error = retry.error
+  }
+
+  if (error) {
+    throw error
+  }
+
+  return normalizeUnits([data])[0] ?? null
 }
 
 function normalizeOperatingHours(entries = []) {

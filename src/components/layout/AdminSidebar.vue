@@ -1,16 +1,16 @@
 <template>
-  <aside class="glass-panel dot-grid sticky top-5 overflow-hidden p-5">
-    <div class="rounded-3xl bg-slate-900/90 p-5 text-white shadow-soft">
+  <aside class="glass-panel dot-grid overflow-hidden p-4 sm:p-5 xl:sticky xl:top-5">
+    <div class="rounded-3xl bg-slate-900/90 p-5 text-white shadow-soft dark:bg-slate-950/90">
       <p class="text-xs font-semibold uppercase tracking-[0.26em] text-sky-200">
         Gestao SUS
       </p>
       <h2 class="mt-3 font-display text-2xl font-semibold">Painel administrativo</h2>
-      <p class="mt-2 text-sm leading-6 text-slate-300">
+      <p class="mt-2 text-sm leading-6 text-slate-300 dark:text-slate-400">
         Controle unidades, especialidades, horarios e acompanhe a fila de agendamentos.
       </p>
     </div>
 
-    <nav class="mt-6 space-y-2">
+    <nav class="mt-6 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
       <button
         v-for="item in items"
         :key="item.key"
@@ -20,7 +20,7 @@
           'w-full rounded-2xl px-4 py-3 text-left transition',
           item.key === activeKey
             ? 'bg-susBlue text-white shadow-card'
-            : 'bg-white/70 text-slate-700 hover:bg-white',
+            : 'bg-white/70 text-slate-700 hover:bg-white dark:bg-slate-900/75 dark:text-slate-100 dark:hover:bg-slate-800',
         ]"
       >
         <div class="flex items-center justify-between gap-3">

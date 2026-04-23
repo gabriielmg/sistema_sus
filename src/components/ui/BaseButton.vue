@@ -70,9 +70,9 @@ const variantMap = {
   success:
     'bg-susGreen text-white shadow-card hover:bg-susGreen-dark focus:ring-susGreen/20',
   secondary:
-    'bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-300/60',
+    'bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-300/60 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 dark:focus:ring-slate-600/60',
   ghost:
-    'bg-white/70 text-slate-700 hover:bg-white focus:ring-slate-300/60 border border-slate-200',
+    'border border-slate-200 bg-white/70 text-slate-700 hover:bg-white focus:ring-slate-300/60 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-600/60',
   danger:
     'bg-rose-600 text-white shadow-card hover:bg-rose-700 focus:ring-rose-500/20',
 }

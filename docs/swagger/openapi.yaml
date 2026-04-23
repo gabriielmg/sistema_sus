@@ -1,0 +1,734 @@
+openapi: 3.0.3
+info:
+  title: Agendamento SUS API
+  version: 1.0.0-academico
+  description: |
+    Documentacao Swagger/OpenAPI do projeto Agendamento SUS.
+
+    Observacao:
+    a implementacao atual usa Vue 3 no cliente e Supabase como BaaS.
+    Este contrato descreve a API de negocio equivalente para apresentacao academica
+    e futura evolucao para um backend REST dedicado.
+servers:
+  - url: https://agendamento-sus.demo.local/api/v1
+    description: Servidor de referencia para demonstracao
+tags:
+  - name: Autenticacao
+  - name: Unidades
+  - name: Especialidades
+  - name: Medicos
+  - name: Horarios
+  - name: Agendamentos
+security:
+  - bearerAuth: []
+paths:
+  /auth/register-cpf:
+    post:
+      tags: [Autenticacao]
+      summary: Cadastra paciente com CPF
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterCpfRequest'
+      responses:
+        '201':
+          description: Conta criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /auth/login-cpf:
+    post:
+      tags: [Autenticacao]
+      summary: Faz login com CPF e senha
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginCpfRequest'
+      responses:
+        '200':
+          description: Sessao autenticada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/me:
+    get:
+      tags: [Autenticacao]
+      summary: Retorna o perfil do usuario autenticado
+      responses:
+        '200':
+          description: Perfil carregado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /units:
+    get:
+      tags: [Unidades]
+      summary: Lista unidades de atendimento
+      responses:
+        '200':
+          description: Lista de unidades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Unit'
+    post:
+      tags: [Unidades]
+      summary: Cria uma unidade
+      description: Exclusivo para admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitWrite'
+      responses:
+        '201':
+          description: Unidade criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /units/{unitId}:
+    parameters:
+      - $ref: '#/components/parameters/UnitId'
+    patch:
+      tags: [Unidades]
+      summary: Atualiza uma unidade
+      description: Admin ou gestor da propria unidade.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitWrite'
+      responses:
+        '200':
+          description: Unidade atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Unidades]
+      summary: Remove uma unidade
+      description: Exclusivo para admin. A remocao pode afetar medicos, horarios e agendamentos vinculados.
+      responses:
+        '204':
+          description: Unidade removida
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /specialties:
+    get:
+      tags: [Especialidades]
+      summary: Lista especialidades
+      responses:
+        '200':
+          description: Lista de especialidades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Specialty'
+    post:
+      tags: [Especialidades]
+      summary: Cria uma especialidade
+      description: Exclusivo para admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpecialtyWrite'
+      responses:
+        '201':
+          description: Especialidade criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Specialty'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /specialties/{specialtyId}:
+    parameters:
+      - $ref: '#/components/parameters/SpecialtyId'
+    patch:
+      tags: [Especialidades]
+      summary: Atualiza uma especialidade
+      description: Exclusivo para admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpecialtyWrite'
+      responses:
+        '200':
+          description: Especialidade atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Specialty'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Especialidades]
+      summary: Remove uma especialidade
+      description: Exclusivo para admin. Falha se houver medicos vinculados.
+      responses:
+        '204':
+          description: Especialidade removida
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /doctors:
+    get:
+      tags: [Medicos]
+      summary: Lista medicos cadastrados
+      responses:
+        '200':
+          description: Lista de medicos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Doctor'
+    post:
+      tags: [Medicos]
+      summary: Cria um medico
+      description: Admin ou gestor da unidade informada.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoctorWrite'
+      responses:
+        '201':
+          description: Medico criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Doctor'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /schedules:
+    get:
+      tags: [Horarios]
+      summary: Lista horarios
+      parameters:
+        - in: query
+          name: unitId
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: specialtyId
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: availableOnly
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: futureOnly
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Lista de horarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+    post:
+      tags: [Horarios]
+      summary: Cria um horario
+      description: Admin ou gestor da unidade.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleWrite'
+      responses:
+        '201':
+          description: Horario criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /appointments:
+    get:
+      tags: [Agendamentos]
+      summary: Lista agendamentos da rede
+      description: Visao da equipe administrativa.
+      responses:
+        '200':
+          description: Lista de agendamentos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+    post:
+      tags: [Agendamentos]
+      summary: Cria um agendamento
+      description: Reserva um horario para o paciente autenticado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentCreateRequest'
+      responses:
+        '201':
+          description: Agendamento criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /appointments/mine:
+    get:
+      tags: [Agendamentos]
+      summary: Lista os agendamentos do paciente autenticado
+      responses:
+        '200':
+          description: Lista de agendamentos do paciente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+  /appointments/{appointmentId}/status:
+    parameters:
+      - $ref: '#/components/parameters/AppointmentId'
+    patch:
+      tags: [Agendamentos]
+      summary: Atualiza o status de um agendamento
+      description: Usado pela equipe para confirmar ou cancelar agendamentos.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentStatusWrite'
+      responses:
+        '200':
+          description: Agendamento atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    UnitId:
+      in: path
+      name: unitId
+      required: true
+      schema:
+        type: integer
+        format: int64
+    SpecialtyId:
+      in: path
+      name: specialtyId
+      required: true
+      schema:
+        type: integer
+        format: int64
+    AppointmentId:
+      in: path
+      name: appointmentId
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    BadRequest:
+      description: Requisicao invalida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Usuario nao autenticado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Usuario sem permissao
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Recurso nao encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Conflito de dados ou regra de negocio
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+    Role:
+      type: string
+      enum: [admin, gestor, paciente]
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        cpf:
+          type: string
+        full_name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          $ref: '#/components/schemas/Role'
+        unit_id:
+          type: integer
+          format: int64
+          nullable: true
+    RegisterCpfRequest:
+      type: object
+      required: [full_name, cpf, password]
+      properties:
+        full_name:
+          type: string
+        cpf:
+          type: string
+          pattern: '^[0-9]{11}$'
+        password:
+          type: string
+          format: password
+          minLength: 6
+    LoginCpfRequest:
+      type: object
+      required: [cpf, password]
+      properties:
+        cpf:
+          type: string
+          pattern: '^[0-9]{11}$'
+        password:
+          type: string
+          format: password
+    AuthSessionResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+          example: 3600
+        profile:
+          $ref: '#/components/schemas/Profile'
+    UnitOperatingHour:
+      type: object
+      properties:
+        weekday:
+          type: integer
+          enum: [0, 1, 2, 3, 4, 5, 6]
+        opens_at:
+          type: string
+          nullable: true
+          example: '08:00'
+        closes_at:
+          type: string
+          nullable: true
+          example: '17:00'
+        is_closed:
+          type: boolean
+    Unit:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        cep:
+          type: string
+        street:
+          type: string
+          nullable: true
+        residence_number:
+          type: string
+          nullable: true
+        neighborhood:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        address_label:
+          type: string
+          nullable: true
+        image_url:
+          type: string
+          nullable: true
+        operating_hours:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnitOperatingHour'
+    UnitWrite:
+      type: object
+      properties:
+        name:
+          type: string
+        cep:
+          type: string
+        street:
+          type: string
+        residence_number:
+          type: string
+        neighborhood:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        address_label:
+          type: string
+        image_url:
+          type: string
+    Specialty:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    SpecialtyWrite:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+    Doctor:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        unit_id:
+          type: integer
+          format: int64
+        specialty_id:
+          type: integer
+          format: int64
+        full_name:
+          type: string
+        crm:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+    DoctorWrite:
+      type: object
+      required: [unit_id, specialty_id, full_name, crm]
+      properties:
+        unit_id:
+          type: integer
+          format: int64
+        specialty_id:
+          type: integer
+          format: int64
+        full_name:
+          type: string
+        crm:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        unit_id:
+          type: integer
+          format: int64
+        specialty_id:
+          type: integer
+          format: int64
+        doctor_id:
+          type: integer
+          format: int64
+          nullable: true
+        starts_at:
+          type: string
+          format: date-time
+        is_available:
+          type: boolean
+        status:
+          type: string
+          enum: [disponivel, reservado, indisponivel]
+    ScheduleWrite:
+      type: object
+      required: [unit_id, specialty_id, starts_at]
+      properties:
+        unit_id:
+          type: integer
+          format: int64
+        specialty_id:
+          type: integer
+          format: int64
+        doctor_id:
+          type: integer
+          format: int64
+          nullable: true
+        starts_at:
+          type: string
+          format: date-time
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        patient_id:
+          type: string
+          format: uuid
+        schedule_id:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [pendente, confirmado, cancelado]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+    AppointmentCreateRequest:
+      type: object
+      required: [schedule_id]
+      properties:
+        schedule_id:
+          type: integer
+          format: int64
+    AppointmentStatusWrite:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [confirmado, cancelado]
