@@ -106,7 +106,7 @@ export async function createUnit(payload) {
 export async function uploadUnitImage(file) {
   assertSupabaseConfigured()
 
-  if (!(file instanceof File)) {
+  if (!file || typeof file !== 'object' || typeof file.arrayBuffer !== 'function') {
     throw new Error('Selecione uma imagem valida para a unidade.')
   }
 
@@ -120,17 +120,19 @@ export async function uploadUnitImage(file) {
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`
   const filePath = `units/${fileName}.${fileExtension}`
+  const contentType = String(file.type || 'image/jpeg').trim() || 'image/jpeg'
 
   const { error } = await supabase.storage
     .from('unit-images')
     .upload(filePath, file, {
       cacheControl: '3600',
       upsert: false,
-      contentType: file.type,
+      contentType,
     })
 
   if (error) {
-    throw error
+    const message = error.message || error.details || error.hint || 'Falha ao enviar a imagem da unidade.'
+    throw new Error(message)
   }
 
   const { data } = supabase.storage.from('unit-images').getPublicUrl(filePath)

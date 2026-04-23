@@ -696,7 +696,7 @@ const specialties = ref([])
 const doctors = ref([])
 const schedules = ref([])
 const appointments = ref([])
-const cepLookupState = ref('Preencha o endereco manualmente. O sistema nao consulta mais CEP automaticamente.')
+const cepLookupState = ref('Digite o CEP completo para preencher o endereco automaticamente.')
 const unitImageFile = ref(null)
 const unitImagePreview = ref('')
 const { profile } = useAuth()
@@ -849,7 +849,46 @@ async function loadAdminData() {
 
 function handleUnitCepInput(value) {
   unitForm.cep = formatCep(value)
-  cepLookupState.value = 'Preencha o endereco manualmente. O sistema nao consulta mais CEP automaticamente.'
+  const cep = sanitizeCep(value)
+
+  if (cep.length === 8) {
+    lookupCep(cep)
+  } else {
+    cepLookupState.value = 'Digite o CEP completo para preencher o endereco automaticamente.'
+  }
+}
+
+async function lookupCep(cep) {
+  cepLookupState.value = 'Buscando endereco para o CEP informado...'
+
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+
+    if (!response.ok) {
+      throw new Error('Erro ao consultar o CEP.')
+    }
+
+    const data = await response.json()
+
+    if (data.erro) {
+      throw new Error('CEP nao encontrado.')
+    }
+
+    unitForm.street = data.logradouro || ''
+    unitForm.neighborhood = data.bairro || ''
+    unitForm.city = data.localidade || ''
+    unitForm.state = (data.uf || '').toUpperCase()
+    cepLookupState.value = 'Endereco preenchido automaticamente.'
+  } catch (error) {
+    unitForm.street = unitForm.street || ''
+    unitForm.neighborhood = unitForm.neighborhood || ''
+    unitForm.city = unitForm.city || ''
+    unitForm.state = unitForm.state || ''
+    cepLookupState.value =
+      String(error?.message || '').toLowerCase().includes('nao encontrado')
+        ? 'CEP nao encontrado. Preencha o endereco manualmente.'
+        : 'Nao foi possivel consultar o CEP. Preencha o endereco manualmente.'
+  }
 }
 
 function handleUnitImageChange(event) {
@@ -885,7 +924,25 @@ async function handleCreateUnit() {
       .filter(Boolean)
       .join(', ')
 
-    const uploadedImage = unitImageFile.value ? await uploadUnitImage(unitImageFile.value) : null
+    let uploadedImage = null
+    let uploadWarning = ''
+
+    if (unitImageFile.value) {
+      try {
+        uploadedImage = await uploadUnitImage(unitImageFile.value)
+      } catch (error) {
+        const message = String(error?.message || error?.details || error?.hint || '')
+
+        if (
+          /bucket|storage|permission|upload|bucket_id/i.test(message)
+        ) {
+          uploadWarning = 'Imagem nao enviada. Verifique a configuracao de armazenamento do Supabase.'
+          uploadedImage = null
+        } else {
+          throw error
+        }
+      }
+    }
 
     await createUnit({
       name: unitForm.name.trim(),
@@ -901,7 +958,7 @@ async function handleCreateUnit() {
 
     units.value = await fetchUnits()
     resetUnitForm()
-    setFeedback('success', 'Unidade salva com sucesso.')
+    setFeedback('success', uploadWarning ? `Unidade salva com sucesso. ${uploadWarning}` : 'Unidade salva com sucesso.')
     activeSection.value = 'units'
   } catch (error) {
     setFeedback('error', mapDataError(error))
@@ -1020,7 +1077,7 @@ function resetUnitForm() {
     URL.revokeObjectURL(unitImagePreview.value)
   }
   unitImagePreview.value = ''
-  cepLookupState.value = 'Preencha o endereco manualmente. O sistema nao consulta mais CEP automaticamente.'
+  cepLookupState.value = 'Digite o CEP completo para preencher o endereco automaticamente.'
 }
 
 function resetScheduleForm() {
@@ -1051,17 +1108,33 @@ function resetFeedback() {
 }
 
 function mapDataError(error) {
-  const message = error?.message ?? ''
+  const message =
+    error?.message ||
+    error?.details ||
+    error?.hint ||
+    String(error || '')
 
-  if (message.includes('duplicate')) {
+  if (message.toLowerCase().includes('duplicate')) {
     return 'Esse registro ja existe no banco de dados.'
   }
 
-  if (message.includes('imagem') || message.includes('administrador')) {
+  if (message.toLowerCase().includes('imagem')) {
+    return 'Nao foi possivel enviar a imagem da unidade. Tente novamente sem foto.'
+  }
+
+  if (/bucket|storage|permission/i.test(message.toLowerCase())) {
+    return 'Erro no upload da imagem. Verifique a configuracao de armazenamento do Supabase.'
+  }
+
+  if (message.toLowerCase().includes('administrador')) {
     return message
   }
 
-  if (message.includes('Nao foi possivel')) {
+  if (message.toLowerCase().includes('permission denied')) {
+    return 'Permissao negada no Supabase. Verifique se sua conta e perfil sao admin.'
+  }
+
+  if (message.toLowerCase().includes('nao foi possivel')) {
     return message
   }
 

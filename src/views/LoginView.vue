@@ -15,7 +15,6 @@ Aqui está o código atualizado, contendo apenas a parte do formulário centrali
           {{ isRegisterMode ? 'Novo cadastro' : 'Acesso rapido' }}
         </span>
       </div>
-
       <div class="mb-6 grid grid-cols-2 gap-2 rounded-3xl bg-slate-100 p-1">
         <button
           type="button"
