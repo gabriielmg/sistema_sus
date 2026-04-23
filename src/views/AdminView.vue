@@ -1057,9 +1057,6 @@ const INCOMPLETE_CEP_LOOKUP_MESSAGE = 'Informe os 8 dígitos do CEP para buscar 
 
 const schedules = ref([])
 const appointments = ref([])
-<<<<<<< HEAD
-const cepLookupState = ref('Digite o CEP completo para preencher o endereco automaticamente.')
-=======
 const cepLookupState = ref(DEFAULT_CEP_LOOKUP_MESSAGE)
 const isAddressAutoFilled = ref(false)
 const isCepLookupLoading = ref(false)
@@ -1071,7 +1068,6 @@ const savingUnitEdit = ref(false)
 const editingUnitCepLookupState = ref(DEFAULT_CEP_LOOKUP_MESSAGE)
 const isEditingUnitAddressAutoFilled = ref(false)
 const isEditingUnitCepLookupLoading = ref(false)
->>>>>>> 11e7f49e445133affafc7d97406b35641974568c
 const unitImageFile = ref(null)
 const unitImagePreview = ref('')
 const { profile } = useAuth()
@@ -1228,47 +1224,6 @@ async function loadAdminData() {
 
 async function handleUnitCepInput(value) {
   unitForm.cep = formatCep(value)
-<<<<<<< HEAD
-  const cep = sanitizeCep(value)
-
-  if (cep.length === 8) {
-    lookupCep(cep)
-  } else {
-    cepLookupState.value = 'Digite o CEP completo para preencher o endereco automaticamente.'
-  }
-}
-
-async function lookupCep(cep) {
-  cepLookupState.value = 'Buscando endereco para o CEP informado...'
-
-  try {
-    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
-
-    if (!response.ok) {
-      throw new Error('Erro ao consultar o CEP.')
-    }
-
-    const data = await response.json()
-
-    if (data.erro) {
-      throw new Error('CEP nao encontrado.')
-    }
-
-    unitForm.street = data.logradouro || ''
-    unitForm.neighborhood = data.bairro || ''
-    unitForm.city = data.localidade || ''
-    unitForm.state = (data.uf || '').toUpperCase()
-    cepLookupState.value = 'Endereco preenchido automaticamente.'
-  } catch (error) {
-    unitForm.street = unitForm.street || ''
-    unitForm.neighborhood = unitForm.neighborhood || ''
-    unitForm.city = unitForm.city || ''
-    unitForm.state = unitForm.state || ''
-    cepLookupState.value =
-      String(error?.message || '').toLowerCase().includes('nao encontrado')
-        ? 'CEP nao encontrado. Preencha o endereco manualmente.'
-        : 'Nao foi possivel consultar o CEP. Preencha o endereco manualmente.'
-=======
   clearUnitAddressFields()
   const cep = sanitizeCep(value)
   cancelCepLookup()
@@ -1390,7 +1345,6 @@ async function lookupAddressByCep(cep) {
     cepLookupState.value = 'Não foi possível consultar o CEP agora. Preencha o endereço manualmente.'
   } finally {
     if (cepLookupController === controller) { cepLookupController = null; isCepLookupLoading.value = false }
->>>>>>> 11e7f49e445133affafc7d97406b35641974568c
   }
 }
 
@@ -1418,7 +1372,6 @@ async function handleCreateUnit() {
     if (!canSubmitUnitForm.value) throw new Error('Preencha o CEP, confirme o endereço e informe o número da unidade.')
     const addressLabel = [
       [unitForm.street, unitForm.residenceNumber].filter(Boolean).join(', '),
-<<<<<<< HEAD
       unitForm.neighborhood,
       unitForm.city,
       unitForm.state,
@@ -1447,11 +1400,6 @@ async function handleCreateUnit() {
       }
     }
 
-=======
-      unitForm.neighborhood, unitForm.city, unitForm.state, 'Brasil',
-    ].filter(Boolean).join(', ')
-    const uploadedImage = unitImageFile.value ? await uploadUnitImage(unitImageFile.value) : null
->>>>>>> 11e7f49e445133affafc7d97406b35641974568c
     await createUnit({
       name: unitForm.name.trim(),
       cep: sanitizeCep(unitForm.cep),
@@ -1676,11 +1624,7 @@ function resetUnitForm() {
   unitImageFile.value = null
   if (unitImagePreview.value) URL.revokeObjectURL(unitImagePreview.value)
   unitImagePreview.value = ''
-<<<<<<< HEAD
-  cepLookupState.value = 'Digite o CEP completo para preencher o endereco automaticamente.'
-=======
   cepLookupState.value = DEFAULT_CEP_LOOKUP_MESSAGE
->>>>>>> 11e7f49e445133affafc7d97406b35641974568c
 }
 
 function resetScheduleForm() {
@@ -1704,45 +1648,50 @@ function setFeedback(type, message) { feedback.type = type; feedback.message = m
 function resetFeedback() { feedback.type = ''; feedback.message = '' }
 
 function mapDataError(error) {
-<<<<<<< HEAD
   const message =
     error?.message ||
     error?.details ||
     error?.hint ||
     String(error || '')
+  const normalizedMessage = message.toLowerCase()
 
-  if (message.toLowerCase().includes('duplicate')) {
+  if (normalizedMessage.includes('duplicate')) {
     return 'Esse registro ja existe no banco de dados.'
   }
 
-  if (message.toLowerCase().includes('imagem')) {
+  if (normalizedMessage.includes('imagem')) {
     return 'Nao foi possivel enviar a imagem da unidade. Tente novamente sem foto.'
   }
 
-  if (/bucket|storage|permission/i.test(message.toLowerCase())) {
+  if (/bucket|storage|permission|bucket_id/i.test(normalizedMessage)) {
     return 'Erro no upload da imagem. Verifique a configuracao de armazenamento do Supabase.'
   }
 
-  if (message.toLowerCase().includes('administrador')) {
+  if (
+    normalizedMessage.includes('administrador') ||
+    normalizedMessage.includes('preencha o cep') ||
+    normalizedMessage.includes('revise o horario') ||
+    normalizedMessage.includes('revise o hor?rio') ||
+    normalizedMessage.includes('alteracoes') ||
+    normalizedMessage.includes('altera??es')
+  ) {
     return message
   }
 
-  if (message.toLowerCase().includes('permission denied')) {
-    return 'Permissao negada no Supabase. Verifique se sua conta e perfil sao admin.'
+  if (
+    normalizedMessage.includes('row-level security') ||
+    normalizedMessage.includes('permission denied')
+  ) {
+    return 'Seu projeto Supabase precisa liberar as permissoes dessa operacao.'
   }
 
-  if (message.toLowerCase().includes('nao foi possivel')) {
+  if (
+    normalizedMessage.includes('nao foi possivel') ||
+    normalizedMessage.includes('n?o foi poss?vel')
+  ) {
     return message
   }
 
   return 'Nao foi possivel concluir a operacao no Supabase.'
-=======
-  const message = error?.message ?? ''
-  if (message.includes('duplicate')) return 'Esse registro já existe no banco de dados.'
-  if (message.includes('imagem') || message.includes('administrador') || message.includes('Preencha o CEP') || message.includes('Revise o horário') || message.includes('alterações')) return message
-  if (message.includes('row-level security')) return 'Seu projeto Supabase precisa liberar as permissões dessa operação.'
-  if (message.includes('Não foi possível')) return message
-  return 'Não foi possível concluir a operação no Supabase.'
->>>>>>> 11e7f49e445133affafc7d97406b35641974568c
 }
 </script>

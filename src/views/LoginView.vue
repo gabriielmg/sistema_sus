@@ -12,14 +12,9 @@
         <span class="inline-flex items-center rounded-full bg-susBlue-soft px-3 py-1 text-xs font-semibold text-susBlue-dark ring-1 ring-inset ring-susBlue/10">
           {{ isRegisterMode ? 'Novo cadastro' : 'Acesso rápido' }}
         </span>
-<<<<<<< HEAD
-      </div>
-      <div class="mb-6 grid grid-cols-2 gap-2 rounded-3xl bg-slate-100 p-1">
-=======
       </header>
 
       <div class="mb-8 flex rounded-2xl bg-slate-100/80 p-1.5 shadow-inner">
->>>>>>> 11e7f49e445133affafc7d97406b35641974568c
         <button
           type="button"
           class="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-susBlue/50"
