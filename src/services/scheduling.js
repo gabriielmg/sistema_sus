@@ -1,6 +1,18 @@
 import { assertSupabaseConfigured, supabase, TABLES } from '@/services/supabase'
 
-const unitSelect = '*'
+const unitHoursSelect = `
+  id,
+  unit_id,
+  weekday,
+  opens_at,
+  closes_at,
+  is_closed
+`
+
+const unitSelect = `
+  *,
+  operating_hours:unit_hours(${unitHoursSelect})
+`
 
 const specialtySelect = 'id, name, created_at'
 
@@ -66,16 +78,26 @@ const appointmentSelect = `
 `
 
 export async function fetchUnits() {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from(TABLES.units)
     .select(unitSelect)
     .order('name')
+
+  if (error && hasMissingUnitHoursRelationError(error)) {
+    const retry = await supabase
+      .from(TABLES.units)
+      .select('*')
+      .order('name')
+
+    data = retry.data
+    error = retry.error
+  }
 
   if (error) {
     throw error
   }
 
-  return data ?? []
+  return normalizeUnits(data)
 }
 
 export async function createUnit(payload) {
@@ -84,6 +106,17 @@ export async function createUnit(payload) {
     .insert([payload])
     .select(unitSelect)
     .single()
+
+  if (error && hasMissingUnitHoursRelationError(error)) {
+    const retry = await supabase
+      .from(TABLES.units)
+      .insert([payload])
+      .select('*')
+      .single()
+
+    data = retry.data
+    error = retry.error
+  }
 
   if (error && hasMissingColumnError(error)) {
     const retry = await supabase
@@ -101,6 +134,90 @@ export async function createUnit(payload) {
   }
 
   return data
+}
+
+export async function updateUnit(unitId, payload) {
+  let { data, error } = await supabase
+    .from(TABLES.units)
+    .update(payload)
+    .eq('id', unitId)
+    .select(unitSelect)
+    .single()
+
+  if (error && hasMissingUnitHoursRelationError(error)) {
+    const retry = await supabase
+      .from(TABLES.units)
+      .update(payload)
+      .eq('id', unitId)
+      .select('*')
+      .single()
+
+    data = retry.data
+    error = retry.error
+  }
+
+  if (error && hasMissingColumnError(error)) {
+    const retry = await supabase
+      .from(TABLES.units)
+      .update(buildUnitPayloadWithoutOptionalColumns(payload))
+      .eq('id', unitId)
+      .select('*')
+      .single()
+
+    data = retry.data
+    error = retry.error
+  }
+
+  if (error) {
+    throw error
+  }
+
+  return data
+}
+
+export async function deleteUnit(unitId) {
+  const { error } = await supabase
+    .from(TABLES.units)
+    .delete()
+    .eq('id', unitId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export async function replaceUnitOperatingHours(unitId, entries = []) {
+  const { error: deleteError } = await supabase
+    .from(TABLES.unitHours)
+    .delete()
+    .eq('unit_id', unitId)
+
+  if (deleteError && !hasMissingUnitHoursRelationError(deleteError)) {
+    throw deleteError
+  }
+
+  if (!entries.length || hasMissingUnitHoursRelationError(deleteError)) {
+    return []
+  }
+
+  const payload = entries.map((entry) => ({
+    unit_id: unitId,
+    weekday: Number(entry.weekday),
+    opens_at: entry.is_closed ? null : String(entry.opens_at ?? '').slice(0, 5),
+    closes_at: entry.is_closed ? null : String(entry.closes_at ?? '').slice(0, 5),
+    is_closed: Boolean(entry.is_closed),
+  }))
+
+  const { data, error } = await supabase
+    .from(TABLES.unitHours)
+    .insert(payload)
+    .select(unitHoursSelect)
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? []
 }
 
 export async function uploadUnitImage(file) {
@@ -396,6 +513,33 @@ export async function rescheduleAppointment({ appointmentId, scheduleId }) {
 
 function hasMissingColumnError(error) {
   return error?.code === 'PGRST204' || error?.code === '42703'
+}
+
+function hasMissingUnitHoursRelationError(error) {
+  return (
+    error?.code === 'PGRST200' ||
+    error?.code === '42P01' ||
+    String(error?.message ?? '').includes('unit_hours')
+  )
+}
+
+function normalizeUnits(units = []) {
+  return (units ?? []).map((unit) => ({
+    ...unit,
+    operating_hours: normalizeOperatingHours(unit?.operating_hours),
+  }))
+}
+
+function normalizeOperatingHours(entries = []) {
+  return [...(entries ?? [])]
+    .map((entry) => ({
+      ...entry,
+      weekday: Number(entry?.weekday),
+      opens_at: entry?.opens_at ? String(entry.opens_at).slice(0, 5) : '',
+      closes_at: entry?.closes_at ? String(entry.closes_at).slice(0, 5) : '',
+      is_closed: Boolean(entry?.is_closed),
+    }))
+    .sort((left, right) => Number(left.weekday) - Number(right.weekday))
 }
 
 function buildUnitPayloadWithoutOptionalColumns(payload = {}) {

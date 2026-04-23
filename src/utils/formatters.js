@@ -99,13 +99,96 @@ export function formatPhone(value = '') {
 
 export function buildUnitAddress(unit = {}) {
   const parts = [
-    unit.street,
+    [unit.street, unit.residence_number || unit.residenceNumber].filter(Boolean).join(', '),
     unit.neighborhood,
     unit.city,
     unit.state,
   ].filter(Boolean)
 
   return parts.join(', ')
+}
+
+export const OPERATING_WEEKDAY_LABELS = [
+  'Domingo',
+  'Segunda',
+  'Terca',
+  'Quarta',
+  'Quinta',
+  'Sexta',
+  'Sabado',
+]
+
+export const OPERATING_WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0]
+
+export function getWeekdayLabel(weekday) {
+  return OPERATING_WEEKDAY_LABELS[Number(weekday)] ?? 'Dia'
+}
+
+export function sortOperatingHours(hours = []) {
+  const orderMap = new Map(OPERATING_WEEKDAY_ORDER.map((weekday, index) => [weekday, index]))
+
+  return [...hours].sort((left, right) => {
+    return (orderMap.get(Number(left?.weekday)) ?? 99) - (orderMap.get(Number(right?.weekday)) ?? 99)
+  })
+}
+
+export function createDefaultOperatingHours() {
+  return OPERATING_WEEKDAY_ORDER.map((weekday) => ({
+    weekday,
+    opens_at: '08:00',
+    closes_at: '17:00',
+    is_closed: weekday === 0,
+  }))
+}
+
+export function mergeOperatingHours(hours = []) {
+  const sourceMap = new Map(hours.map((entry) => [Number(entry?.weekday), entry]))
+
+  return createDefaultOperatingHours().map((entry) => {
+    const source = sourceMap.get(Number(entry.weekday))
+
+    if (!source) {
+      return { ...entry }
+    }
+
+    return {
+      ...entry,
+      ...source,
+      weekday: Number(source.weekday ?? entry.weekday),
+      opens_at: String(source.opens_at ?? entry.opens_at).slice(0, 5),
+      closes_at: String(source.closes_at ?? entry.closes_at).slice(0, 5),
+      is_closed: Boolean(source.is_closed),
+    }
+  })
+}
+
+export function formatOperatingHourRange(entry) {
+  if (!entry || entry.is_closed) {
+    return 'Fechado'
+  }
+
+  const opensAt = String(entry.opens_at ?? '').slice(0, 5)
+  const closesAt = String(entry.closes_at ?? '').slice(0, 5)
+
+  if (!opensAt || !closesAt) {
+    return 'Horario nao informado'
+  }
+
+  return `${opensAt} - ${closesAt}`
+}
+
+export function getOperatingHoursForWeekday(hours = [], weekday = new Date().getDay()) {
+  return mergeOperatingHours(hours).find((entry) => Number(entry.weekday) === Number(weekday)) ?? null
+}
+
+export function formatTodayOperatingHours(hours = [], date = new Date()) {
+  const today = getOperatingHoursForWeekday(hours, date.getDay())
+
+  if (!today) {
+    return 'Horario nao informado'
+  }
+
+  return `${getWeekdayLabel(today.weekday)}: ${formatOperatingHourRange(today)}`
 }
 
 export function getInitials(name = '') {
