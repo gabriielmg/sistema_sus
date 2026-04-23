@@ -1,5 +1,175 @@
-@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    @apply min-h-screen bg-slate-100 font-sans text-slate-800 antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(29, 95, 209, 0.22), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(15, 155, 109, 0.16), transparent 28%),
+      linear-gradient(180deg, #f8fbff 0%, #edf4fb 100%);
+    background-attachment: fixed;
+  }
+
+  #app {
+    @apply min-h-screen;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply rounded-[28px] border border-white/70 bg-white/85 shadow-soft backdrop-blur-xl;
+  }
+
+  .section-panel {
+    @apply glass-panel p-6 lg:p-7;
+  }
+
+  .input-field {
+    @apply min-h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-susBlue focus:ring-4 focus:ring-susBlue/10 disabled:cursor-not-allowed disabled:bg-slate-100;
+  }
+
+  .select-field {
+    @apply input-field appearance-none;
+  }
+
+  .label-text {
+    @apply mb-2 block text-sm font-bold text-slate-800;
+  }
+
+  .helper-text {
+    @apply text-sm text-slate-600;
+  }
+
+  .page-shell {
+    @apply mx-auto max-w-7xl px-3 py-4 sm:px-4 lg:px-6;
+  }
+
+  .page-heading {
+    @apply font-display text-3xl font-bold tracking-tight text-ink lg:text-4xl;
+  }
+
+  .page-subtitle {
+    @apply mt-2 max-w-2xl text-sm leading-6 text-slate-600 lg:text-base;
+  }
+
+  .field-surface {
+    @apply rounded-3xl border border-slate-200/80 bg-slate-50/70 p-4;
+  }
+
+  .dot-grid {
+    background-image: theme('backgroundImage.hero-grid');
+    background-size: 18px 18px;
+  }
+}
+
+.success-burst {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 144px;
+  height: 144px;
+}
+
+.success-burst::before,
+.success-burst::after {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(15, 155, 109, 0.16), transparent 68%);
+  animation: pulse-burst 1.8s ease-out infinite;
+}
+
+.success-burst::after {
+  inset: 0;
+  animation-delay: 0.35s;
+}
+
+.success-ring {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  height: 104px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0f9b6d, #1d5fd1);
+  box-shadow: 0 22px 45px -22px rgba(15, 155, 109, 0.55);
+}
+
+.success-check {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.success-check span {
+  position: absolute;
+  left: 15px;
+  top: 15px;
+  width: 22px;
+  height: 12px;
+  border-left: 4px solid #ffffff;
+  border-bottom: 4px solid #ffffff;
+  transform: rotate(-45deg) scale(0.7);
+  transform-origin: center;
+  animation: draw-check 0.5s ease-out 0.2s both;
+}
+
+@keyframes pulse-burst {
+  0% {
+    opacity: 0.15;
+    transform: scale(0.84);
+  }
+
+  70% {
+    opacity: 0.5;
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes draw-check {
+  from {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.2);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(-45deg) scale(1);
+  }
+}
