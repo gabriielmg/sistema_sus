@@ -451,6 +451,49 @@ export async function fetchAppointments() {
   return data ?? []
 }
 
+export async function fetchAppointmentsByUnit(unitId) {
+  const { data, error } = await supabase
+    .from(TABLES.appointments)
+    .select(appointmentSelect)
+    .eq('schedule.unit_id', unitId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).filter((a) => String(a.schedule?.unit?.id) === String(unitId))
+}
+
+export async function fetchSchedulesByUnit(unitId) {
+  const { data, error } = await supabase
+    .from(TABLES.schedules)
+    .select(scheduleSelect)
+    .eq('unit_id', unitId)
+    .gte('starts_at', new Date().toISOString())
+    .order('starts_at', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? []
+}
+
+export async function fetchDoctorsByUnit(unitId) {
+  const { data, error } = await supabase
+    .from(TABLES.doctors)
+    .select(doctorSelect)
+    .eq('unit_id', unitId)
+    .order('full_name', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? []
+}
+
 export async function fetchAppointmentsByPatient(patientId) {
   const { data, error } = await supabase
     .from(TABLES.appointments)

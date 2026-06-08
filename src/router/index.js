@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/LoginView.vue'
 import PacienteView from '@/views/PacienteView.vue'
 import AdminView from '@/views/AdminView.vue'
+import GestorView from '@/views/GestorView.vue'
 import {
   getHomeRouteByRole,
   getProfileByUserId,
@@ -35,7 +36,16 @@ const router = createRouter({
       component: AdminView,
       meta: {
         requiresAuth: true,
-        role: ['admin', 'gestor'],
+        role: 'admin',
+      },
+    },
+    {
+      path: '/gestor',
+      name: 'gestor',
+      component: GestorView,
+      meta: {
+        requiresAuth: true,
+        role: 'gestor',
       },
     },
   ],

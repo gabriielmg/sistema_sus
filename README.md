@@ -47,6 +47,21 @@ Ao abrir o projeto em outra maquina:
 
 O arquivo `.env` nao entra mais no Git. Assim cada maquina pode usar suas credenciais locais sem gerar conflito de merge.
 
+## Deploy
+
+Se no deploy aparecer a mensagem de falta de configuracao do Supabase, o problema nao e o componente de login: a hospedagem nao recebeu `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
+
+Use um destes caminhos:
+
+1. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` nas variaveis de ambiente da plataforma que faz o build.
+2. Se sua hospedagem for estatica e nao injeta `.env` no build, edite `public/runtime-env.js` antes de publicar, ou ajuste o `runtime-env.js` gerado dentro de `dist/`.
+
+Observacoes importantes:
+
+- Em Vite, o `.env` local nao e enviado automaticamente para producao.
+- O prefixo precisa ser `VITE_`, senao o front-end nao consegue ler a variavel.
+- A `anon key` do Supabase pode ficar no front-end; a `service_role key` nao pode.
+
 ## Fluxo recomendado de Git
 
 Para reduzir conflitos:

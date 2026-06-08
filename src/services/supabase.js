@@ -1,8 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ''
+const runtimeEnv = typeof globalThis !== 'undefined' ? globalThis.__APP_ENV__ ?? {} : {}
 
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? runtimeEnv.VITE_SUPABASE_URL ?? ''
+
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? runtimeEnv.VITE_SUPABASE_ANON_KEY ?? ''
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 
@@ -27,7 +29,7 @@ export const supabase = createClient(supabaseUrl || 'https://placeholder.supabas
 export function assertSupabaseConfigured() {
   if (!isSupabaseConfigured) {
     throw new Error(
-      'Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env antes de usar autenticacao ou banco.',
+      'Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env local, nas variaveis do deploy ou no runtime-env.js antes de usar autenticacao ou banco.',
     )
   }
 
@@ -43,7 +45,7 @@ export function assertSupabaseConfigured() {
 
   if (projectRefFromKey && projectRefFromUrl !== projectRefFromKey) {
     throw new Error(
-      'A URL do Supabase e a anon key pertencem a projetos diferentes. Revise o arquivo .env.',
+      'A URL do Supabase e a anon key pertencem a projetos diferentes. Revise o .env local, as variaveis do deploy ou o runtime-env.js.',
     )
   }
 }
@@ -75,7 +77,9 @@ function getProjectRefFromAnonKey(token) {
 }
 
 export function getHomeRouteByRole(role = 'paciente') {
-  return role === 'admin' || role === 'gestor' ? '/admin' : '/paciente'
+  if (role === 'admin') return '/admin'
+  if (role === 'gestor') return '/gestor'
+  return '/paciente'
 }
 
 export function getRoleFromUser(user) {

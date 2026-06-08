@@ -12,52 +12,36 @@ export function formatCep(value = '') {
   return `${cep.slice(0, 5)}-${cep.slice(5)}`
 }
 
+const TZ = 'America/Fortaleza'
+
 export function formatDateTime(value) {
-  if (!value) {
-    return '--'
-  }
-
+  if (!value) return '--'
   const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return '--'
-  }
-
+  if (Number.isNaN(date.getTime())) return '--'
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'medium',
     timeStyle: 'short',
+    timeZone: TZ,
   }).format(date)
 }
 
 export function formatDate(value) {
-  if (!value) {
-    return '--'
-  }
-
+  if (!value) return '--'
   const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return '--'
-  }
-
+  if (Number.isNaN(date.getTime())) return '--'
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'medium',
+    timeZone: TZ,
   }).format(date)
 }
 
 export function formatTime(value) {
-  if (!value) {
-    return '--'
-  }
-
+  if (!value) return '--'
   const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return '--'
-  }
-
+  if (Number.isNaN(date.getTime())) return '--'
   return new Intl.DateTimeFormat('pt-BR', {
     timeStyle: 'short',
+    timeZone: TZ,
   }).format(date)
 }
 
