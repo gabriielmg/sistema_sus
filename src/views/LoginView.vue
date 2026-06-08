@@ -301,7 +301,7 @@ function validateCpf(raw) {
 function onCpfInput() {
   form.cpf = formatCpf(form.cpf)
   const digits = form.cpf.replace(/\D/g, '')
-  if (digits.length === 11) {
+  if (isRegisterMode.value && digits.length === 11) {
     cpfError.value = validateCpf(form.cpf) ? '' : 'CPF inválido.'
   } else {
     cpfError.value = ''
