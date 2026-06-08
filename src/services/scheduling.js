@@ -550,6 +550,57 @@ export async function cancelAppointment(appointmentId) {
   return updateAppointmentStatus(appointmentId, 'cancelado')
 }
 
+export async function cancelAppointmentWithReason(appointmentId, reason = '') {
+  const base = { status: 'cancelado', updated_at: new Date().toISOString() }
+  const payload = reason?.trim() ? { ...base, cancellation_reason: reason.trim() } : base
+
+  const { data, error } = await supabase
+    .from(TABLES.appointments)
+    .update(payload)
+    .eq('id', appointmentId)
+    .select(appointmentSelect)
+    .single()
+
+  if (error && (error.code === '42703' || String(error.message).includes('cancellation_reason'))) {
+    const retry = await supabase
+      .from(TABLES.appointments)
+      .update(base)
+      .eq('id', appointmentId)
+      .select(appointmentSelect)
+      .single()
+    if (retry.error) throw retry.error
+    return retry.data
+  }
+
+  if (error) throw error
+  return data
+}
+
+export async function confirmPatientPresence(appointmentId) {
+  const base = { status: 'confirmado', updated_at: new Date().toISOString() }
+
+  const { data, error } = await supabase
+    .from(TABLES.appointments)
+    .update({ ...base, patient_confirmed_at: new Date().toISOString() })
+    .eq('id', appointmentId)
+    .select(appointmentSelect)
+    .single()
+
+  if (error && (error.code === '42703' || String(error.message).includes('patient_confirmed_at'))) {
+    const retry = await supabase
+      .from(TABLES.appointments)
+      .update(base)
+      .eq('id', appointmentId)
+      .select(appointmentSelect)
+      .single()
+    if (retry.error) throw retry.error
+    return retry.data
+  }
+
+  if (error) throw error
+  return data
+}
+
 export async function rescheduleAppointment({ appointmentId, scheduleId }) {
   const { data, error } = await supabase
     .from(TABLES.appointments)

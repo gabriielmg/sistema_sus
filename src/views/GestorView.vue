@@ -125,29 +125,40 @@
             </p>
           </div>
 
-          <div class="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              class="rounded-xl px-4 py-2 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-40"
-              :class="isDark
-                ? 'bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/50'
-                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
-              :disabled="appointment.status === 'confirmado' || loading.action"
+          <!-- Ações por status -->
+          <div v-if="appointment.status === 'pendente'" class="flex shrink-0 items-center gap-2">
+            <button type="button"
+              class="rounded-xl px-4 py-2 text-xs font-bold transition-all disabled:opacity-40"
+              :class="isDark ? 'bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/50' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
+              :disabled="loading.action"
               @click="handleUpdateStatus(appointment, 'confirmado')"
-            >
-              Confirmar
-            </button>
-            <button
-              type="button"
-              class="rounded-xl px-4 py-2 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-40"
-              :class="isDark
-                ? 'bg-rose-900/30 text-rose-300 hover:bg-rose-900/50'
-                : 'bg-rose-50 text-rose-600 hover:bg-rose-100'"
-              :disabled="appointment.status === 'cancelado' || loading.action"
+            >Confirmar</button>
+            <button type="button"
+              class="rounded-xl px-4 py-2 text-xs font-bold transition-all disabled:opacity-40"
+              :class="isDark ? 'bg-rose-900/30 text-rose-300 hover:bg-rose-900/50' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'"
+              :disabled="loading.action"
               @click="handleUpdateStatus(appointment, 'cancelado')"
-            >
-              Cancelar
-            </button>
+            >Cancelar</button>
+          </div>
+          <div v-else-if="appointment.status === 'confirmado'" class="flex shrink-0 flex-wrap items-center gap-2">
+            <button type="button"
+              class="rounded-xl px-4 py-2 text-xs font-bold transition-all disabled:opacity-40"
+              :class="isDark ? 'bg-violet-900/40 text-violet-300 hover:bg-violet-800/50' : 'bg-violet-50 text-violet-700 hover:bg-violet-100'"
+              :disabled="loading.action"
+              @click="handleUpdateStatus(appointment, 'realizado')"
+            >Realizado</button>
+            <button type="button"
+              class="rounded-xl px-4 py-2 text-xs font-bold transition-all disabled:opacity-40"
+              :class="isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+              :disabled="loading.action"
+              @click="handleUpdateStatus(appointment, 'nao_compareceu')"
+            >Faltou</button>
+            <button type="button"
+              class="rounded-xl px-4 py-2 text-xs font-bold transition-all disabled:opacity-40"
+              :class="isDark ? 'bg-rose-900/30 text-rose-300 hover:bg-rose-900/50' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'"
+              :disabled="loading.action"
+              @click="handleUpdateStatus(appointment, 'cancelado')"
+            >Cancelar</button>
           </div>
         </article>
       </div>
@@ -340,6 +351,8 @@ const statusFilters = [
   { value: 'all', label: 'Todos' },
   { value: 'pendente', label: 'Pendentes' },
   { value: 'confirmado', label: 'Confirmados' },
+  { value: 'realizado', label: 'Realizados' },
+  { value: 'nao_compareceu', label: 'Não compareceu' },
   { value: 'cancelado', label: 'Cancelados' },
 ]
 
@@ -450,7 +463,7 @@ async function handleCreateSchedule() {
   loading.schedule = true
   resetFeedback()
   try {
-    const startsAt = new Date(`${scheduleForm.date}T${scheduleForm.time}:00`).toISOString()
+    const startsAt = new Date(`${scheduleForm.date}T${scheduleForm.time}:00-03:00`).toISOString()
     const newSchedule = await createSchedule({
       unit_id: Number(unitId.value),
       specialty_id: Number(scheduleForm.specialtyId),

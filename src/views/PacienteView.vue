@@ -323,22 +323,152 @@
           <article
             v-for="appointment in myAppointments"
             :key="appointment.id"
-            class="flex items-center gap-4 rounded-2xl border px-4 py-4"
+            class="rounded-2xl border px-4 py-4"
             :class="isDark ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-white shadow-sm'"
           >
-            <div class="min-w-0 flex-1">
-              <p :class="['font-bold truncate', isDark ? 'text-white' : 'text-slate-900']">
-                {{ appointment.schedule?.specialty?.name || 'Especialidade não informada' }}
-              </p>
-              <p :class="['text-xs truncate mt-0.5', isDark ? 'text-slate-400' : 'text-slate-500']">
-                {{ appointment.schedule?.unit?.name || 'Unidade não informada' }} · {{ formatDateTime(appointment.schedule?.starts_at) }}
-              </p>
+            <div class="flex items-start gap-3">
+              <div class="min-w-0 flex-1">
+                <p :class="['font-bold truncate', isDark ? 'text-white' : 'text-slate-900']">
+                  {{ appointment.schedule?.specialty?.name || 'Especialidade não informada' }}
+                </p>
+                <p :class="['text-xs truncate mt-0.5', isDark ? 'text-slate-400' : 'text-slate-500']">
+                  {{ appointment.schedule?.unit?.name || 'Unidade não informada' }} · {{ formatDateTime(appointment.schedule?.starts_at) }}
+                </p>
+              </div>
+              <StatusBadge :status="appointment.status" />
             </div>
-            <StatusBadge :status="appointment.status" />
+
+            <!-- Ações do paciente -->
+            <div
+              v-if="isConfirmable(appointment) || isCancellable(appointment)"
+              class="mt-3 flex flex-wrap gap-2 border-t pt-3"
+              :class="isDark ? 'border-slate-800' : 'border-slate-100'"
+            >
+              <button
+                v-if="isConfirmable(appointment)"
+                type="button"
+                class="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all"
+                :class="isDark ? 'bg-emerald-900/30 text-emerald-300 hover:bg-emerald-900/50' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
+                @click="handleConfirmPresence(appointment)"
+              >
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                Confirmar presença
+              </button>
+              <button
+                v-if="isCancellable(appointment)"
+                type="button"
+                class="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all"
+                :class="isDark ? 'bg-rose-900/20 text-rose-400 hover:bg-rose-900/40' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'"
+                @click="openCancelModal(appointment)"
+              >
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Cancelar
+              </button>
+            </div>
+            <p
+              v-else-if="['pendente', 'confirmado'].includes(appointment.status) && hoursUntil(appointment.schedule?.starts_at) > 0"
+              class="mt-2 text-xs"
+              :class="isDark ? 'text-amber-400' : 'text-amber-600'"
+            >
+              Cancelamento indisponível — menos de 24h para a consulta.
+            </p>
           </article>
         </div>
       </section>
     </Transition>
+
+    <!-- ── Modal: Cancelar consulta ── -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition-all duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-all duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="cancelModal.show"
+          class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeCancelModal" />
+          <div
+            class="relative w-full max-w-md rounded-3xl p-6 shadow-2xl"
+            :class="isDark ? 'border border-slate-800 bg-slate-900' : 'bg-white'"
+          >
+            <div class="mb-4 flex items-center gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100">
+                <svg class="h-5 w-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <div>
+                <h3 :class="['font-black', isDark ? 'text-white' : 'text-slate-900']">Cancelar consulta</h3>
+                <p class="text-xs text-slate-500">Esta ação não pode ser desfeita.</p>
+              </div>
+            </div>
+
+            <div
+              v-if="cancelModal.appointment"
+              class="mb-4 rounded-2xl p-4"
+              :class="isDark ? 'bg-slate-800' : 'bg-slate-50'"
+            >
+              <p :class="['text-sm font-bold', isDark ? 'text-white' : 'text-slate-900']">
+                {{ cancelModal.appointment.schedule?.specialty?.name }}
+              </p>
+              <p class="mt-0.5 text-xs text-slate-500">
+                {{ cancelModal.appointment.schedule?.unit?.name }} · {{ formatDateTime(cancelModal.appointment.schedule?.starts_at) }}
+              </p>
+            </div>
+
+            <div class="mb-5 space-y-1.5">
+              <label :class="['block text-xs font-bold uppercase tracking-wider', isDark ? 'text-slate-400' : 'text-slate-500']">
+                Motivo <span class="font-normal opacity-60">(opcional)</span>
+              </label>
+              <textarea
+                v-model="cancelModal.reason"
+                rows="3"
+                placeholder="Ex: Meu quadro clínico melhorou, terei atendimento particular..."
+                class="block w-full resize-none rounded-2xl border px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-rose-400/30"
+                :class="isDark
+                  ? 'border-slate-700 bg-slate-800 text-white placeholder-slate-500'
+                  : 'border-slate-200 bg-white text-slate-900 placeholder-slate-400'"
+              />
+            </div>
+
+            <div class="flex gap-3">
+              <button
+                type="button"
+                class="flex-1 rounded-2xl py-3.5 text-sm font-bold transition-all"
+                :class="isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                :disabled="cancelModal.loading"
+                @click="closeCancelModal"
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                class="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-rose-600 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-rose-700 disabled:opacity-50"
+                :disabled="cancelModal.loading"
+                @click="confirmCancel"
+              >
+                <svg v-if="cancelModal.loading" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-90" fill="currentColor" d="M22 12a10 10 0 0 0-10-10v4a6 6 0 0 1 6 6h4Z" />
+                </svg>
+                {{ cancelModal.loading ? 'Cancelando...' : 'Confirmar cancelamento' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Botão flutuante "Meus agendamentos" (só no step unit) -->
     <div v-if="step === 'unit' && !showAppointments" class="flex justify-center pt-2">
@@ -363,6 +493,8 @@ import StatusBadge from '@/components/ui/StatusBadge.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
 import {
+  cancelAppointmentWithReason,
+  confirmPatientPresence,
   createAppointment,
   fetchAppointmentsByPatient,
   fetchAvailableSchedulesByUnitAndSpecialty,
@@ -375,14 +507,7 @@ import {
   loadWaitlistEntries,
   pushNotifications,
 } from '@/services/patientExperience'
-import {
-  buildUnitAddress,
-  formatDateTime,
-  formatOperatingHourRange,
-  formatTodayOperatingHours,
-  getWeekdayLabel,
-  sortOperatingHours,
-} from '@/utils/formatters'
+import { buildUnitAddress, formatDateTime } from '@/utils/formatters'
 
 const { user, profile } = useAuth()
 const { isDark } = useTheme()
@@ -400,6 +525,7 @@ const successAppointment = ref(null)
 
 const loading = reactive({ units: true, schedules: false, booking: false, appointments: false })
 const feedback = reactive({ type: '', message: '' })
+const cancelModal = reactive({ show: false, appointment: null, reason: '', loading: false })
 
 const specialtyOptions = computed(() => specialties.value)
 
@@ -554,6 +680,69 @@ function handleJoinWaitlist() {
     unitName: selectedUnit.value?.name || '',
   })
   setFeedback('success', 'Você entrou na fila de espera. Avisaremos quando surgir vaga.')
+}
+
+const CANCEL_MIN_HOURS = 24
+
+function hoursUntil(isoString) {
+  if (!isoString) return 0
+  return (new Date(isoString).getTime() - Date.now()) / 3600000
+}
+
+function isCancellable(appointment) {
+  return (
+    ['pendente', 'confirmado'].includes(appointment.status) &&
+    hoursUntil(appointment.schedule?.starts_at) > CANCEL_MIN_HOURS
+  )
+}
+
+function isConfirmable(appointment) {
+  return appointment.status === 'pendente' && hoursUntil(appointment.schedule?.starts_at) > 0
+}
+
+function openCancelModal(appointment) {
+  cancelModal.appointment = appointment
+  cancelModal.reason = ''
+  cancelModal.show = true
+}
+
+function closeCancelModal() {
+  if (cancelModal.loading) return
+  cancelModal.show = false
+  cancelModal.appointment = null
+  cancelModal.reason = ''
+}
+
+async function confirmCancel() {
+  if (!cancelModal.appointment || cancelModal.loading) return
+  cancelModal.loading = true
+  try {
+    await cancelAppointmentWithReason(cancelModal.appointment.id, cancelModal.reason)
+    const idx = myAppointments.value.findIndex((a) => a.id === cancelModal.appointment.id)
+    if (idx !== -1) myAppointments.value[idx] = { ...myAppointments.value[idx], status: 'cancelado' }
+    if (selectedUnit.value && selectedSpecialtyId.value) {
+      unitSchedulesById.value[String(selectedUnit.value.id)] =
+        await fetchAvailableSchedulesByUnitAndSpecialty(selectedUnit.value.id, selectedSpecialtyId.value)
+    }
+    closeCancelModal()
+    setFeedback('success', 'Consulta cancelada com sucesso.')
+  } catch {
+    setFeedback('error', 'Não foi possível cancelar. Tente novamente.')
+  } finally {
+    cancelModal.loading = false
+  }
+}
+
+async function handleConfirmPresence(appointment) {
+  if (!appointment?.id) return
+  try {
+    await confirmPatientPresence(appointment.id)
+    const idx = myAppointments.value.findIndex((a) => a.id === appointment.id)
+    if (idx !== -1) myAppointments.value[idx] = { ...myAppointments.value[idx], status: 'confirmado' }
+    setFeedback('success', 'Presença confirmada! Te esperamos.')
+  } catch {
+    setFeedback('error', 'Não foi possível confirmar presença. Tente novamente.')
+  }
 }
 
 function resetFlow() {

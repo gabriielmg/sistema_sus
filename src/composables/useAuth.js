@@ -111,11 +111,12 @@ export function useAuth() {
     }
   }
 
-  async function signUpWithPassword({ email, password, fullName, cpf }) {
+  async function signUpWithPassword({ email, password, fullName, cpf, phone = '' }) {
     assertSupabaseConfigured()
 
     const normalizedCpf = normalizeRequiredCpf(cpf)
     const resolvedEmail = email || buildAuthEmailFromCpf(normalizedCpf)
+    const normalizedPhone = String(phone || '').replace(/\D/g, '')
 
     const { data, error } = await supabase.auth.signUp({
       email: resolvedEmail,
@@ -124,6 +125,7 @@ export function useAuth() {
         data: {
           full_name: String(fullName || '').trim(),
           cpf: normalizedCpf,
+          phone: normalizedPhone,
         },
       },
     })
@@ -143,7 +145,7 @@ export function useAuth() {
         fullName,
         role: getRoleFromUser(data.user),
         cpf: normalizedCpf,
-        phone: data.user.phone ?? data.user.user_metadata?.phone ?? '',
+        phone: normalizedPhone || data.user.phone || data.user.user_metadata?.phone || '',
         unitId: data.user.user_metadata?.unit_id ?? null,
       })
     }
@@ -170,7 +172,7 @@ export function useAuth() {
     })
   }
 
-  async function signUpWithCpf({ fullName, cpf, password }) {
+  async function signUpWithCpf({ fullName, cpf, password, phone = '' }) {
     const trimmedFullName = String(fullName || '').trim()
 
     if (!trimmedFullName) {
@@ -190,6 +192,7 @@ export function useAuth() {
       password,
       fullName: trimmedFullName,
       cpf,
+      phone,
     })
   }
 

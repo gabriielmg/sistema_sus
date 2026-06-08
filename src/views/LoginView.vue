@@ -175,15 +175,40 @@
               v-model="form.cpf"
               type="text"
               class="login-input"
+              :class="cpfError ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/20' : ''"
               placeholder="000.000.000-00"
               inputmode="numeric"
               autocomplete="username"
               maxlength="14"
               enterkeyhint="next"
               required
-              @input="form.cpf = formatCpf(form.cpf)"
+              @input="onCpfInput"
             />
+            <p v-if="cpfError" class="text-xs font-semibold text-rose-500">{{ cpfError }}</p>
           </div>
+
+          <Transition
+            enter-active-class="transition-all duration-200 ease-out"
+            enter-from-class="opacity-0 -translate-y-1"
+            enter-to-class="opacity-100 translate-y-0"
+          >
+            <div v-if="isRegisterMode" class="space-y-1.5">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500" for="phone">
+                Telefone <span class="font-normal opacity-60">(opcional)</span>
+              </label>
+              <input
+                id="phone"
+                v-model="form.phone"
+                type="tel"
+                class="login-input"
+                placeholder="(83) 99999-9999"
+                inputmode="tel"
+                autocomplete="tel"
+                maxlength="15"
+                enterkeyhint="next"
+              />
+            </div>
+          </Transition>
 
           <div class="space-y-1.5">
             <div class="flex items-center justify-between">
@@ -270,8 +295,30 @@ const mode = ref('login')
 const loading = ref(false)
 const showPassword = ref(false)
 
-const form = reactive({ fullName: '', cpf: '', password: '' })
+const form = reactive({ fullName: '', cpf: '', phone: '', password: '' })
 const feedback = reactive({ type: '', message: '' })
+const cpfError = ref('')
+
+function validateCpf(raw) {
+  const d = raw.replace(/\D/g, '')
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false
+  const calc = (len) => {
+    const sum = Array.from({ length: len }, (_, i) => parseInt(d[i]) * (len + 1 - i)).reduce((a, b) => a + b, 0)
+    const rem = (sum * 10) % 11
+    return rem >= 10 ? 0 : rem
+  }
+  return calc(9) === parseInt(d[9]) && calc(10) === parseInt(d[10])
+}
+
+function onCpfInput() {
+  form.cpf = formatCpf(form.cpf)
+  const digits = form.cpf.replace(/\D/g, '')
+  if (digits.length === 11) {
+    cpfError.value = validateCpf(form.cpf) ? '' : 'CPF inválido.'
+  } else {
+    cpfError.value = ''
+  }
+}
 
 const benefits = [
   { text: 'Unidades de saúde próximas de você' },
@@ -281,18 +328,19 @@ const benefits = [
 ]
 
 const isRegisterMode = computed(() => mode.value === 'register')
-const canSubmit = computed(() =>
-  isRegisterMode.value
+const canSubmit = computed(() => {
+  if (cpfError.value) return false
+  return isRegisterMode.value
     ? Boolean(form.fullName && form.cpf && form.password.length >= 6)
-    : Boolean(form.cpf && form.password),
-)
+    : Boolean(form.cpf && form.password)
+})
 
 async function handleSubmit() {
   loading.value = true
   resetFeedback()
   try {
     const result = isRegisterMode.value
-      ? await signUpWithCpf({ fullName: form.fullName, cpf: form.cpf, password: form.password })
+      ? await signUpWithCpf({ fullName: form.fullName, cpf: form.cpf, password: form.password, phone: form.phone })
       : await signInWithCpf({ cpf: form.cpf, password: form.password })
 
     feedback.type = 'success'
@@ -314,7 +362,8 @@ function switchMode(nextMode) {
   mode.value = nextMode
   resetFeedback()
   form.password = ''
-  if (nextMode === 'login') form.fullName = ''
+  if (nextMode === 'login') { form.fullName = ''; form.phone = '' }
+  cpfError.value = ''
 }
 
 function resetFeedback() {
