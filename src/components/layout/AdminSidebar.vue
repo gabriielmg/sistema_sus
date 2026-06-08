@@ -7,6 +7,11 @@
         : 'border-slate-200/60 bg-white/90 shadow-xl shadow-slate-200/30 backdrop-blur-xl',
     ]"
   >
+    <!-- Logo -->
+    <div class="mb-4 px-1">
+      <AppLogo size="sm" :variant="isDark ? 'light' : 'dark'" />
+    </div>
+
     <!-- Hero do painel -->
     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0a3d8a] via-[#0f62db] to-[#0b7d5b] p-5 text-white">
       <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
@@ -90,6 +95,7 @@
 
 <script setup>
 import { useTheme } from '@/composables/useTheme'
+import AppLogo from '@/components/ui/AppLogo.vue'
 
 defineProps({
   items: { type: Array, default: () => [] },

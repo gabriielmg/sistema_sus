@@ -11,16 +11,8 @@
       <div class="pointer-events-none absolute -bottom-24 -left-24 h-[28rem] w-[28rem] rounded-full bg-susGreen/20 blur-3xl" />
 
       <!-- Logo topo -->
-      <div class="relative z-10 flex items-center gap-3">
-        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20 backdrop-blur-sm">
-          <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-        </div>
-        <div>
-          <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-white/60">Sistema Público</p>
-          <p class="text-base font-extrabold tracking-tight text-white">Agendamento SUS</p>
-        </div>
+      <div class="relative z-10">
+        <AppLogo size="md" variant="light" />
       </div>
 
       <!-- Conteúdo central -->
@@ -67,13 +59,8 @@
     <div class="flex flex-1 flex-col items-center justify-center bg-white px-5 py-10 sm:px-10 lg:px-14 xl:px-20">
 
       <!-- Logo mobile (só aparece em telas pequenas) -->
-      <div class="mb-8 flex items-center gap-3 lg:hidden">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-susBlue to-susBlue-dark shadow-lg shadow-susBlue/30">
-          <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-        </div>
-        <p class="text-lg font-extrabold tracking-tight text-slate-900">Agendamento SUS</p>
+      <div class="mb-8 lg:hidden">
+        <AppLogo size="md" variant="dark" />
       </div>
 
       <div class="w-full max-w-[400px]">
@@ -287,6 +274,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { getHomeRouteByRole } from '@/services/supabase'
 import { formatCpf } from '@/utils/formatters'
+import AppLogo from '@/components/ui/AppLogo.vue'
 
 const router = useRouter()
 const { signInWithCpf, signUpWithCpf } = useAuth()
